@@ -83,7 +83,6 @@ const allMintAddresses = mintList.flat();
 export function Swap() {
   const connection = useConnection();
   const wallet = useWallet();
-  const [entangledPair, setEntangledPair] = useState('');
   const [imageMap, setImageMap] = useState({});
   const [loading, setLoading] = useState(false);
   const [matchingNfts, setMatchingNfts] = useState<any>([]);
@@ -168,7 +167,6 @@ export function Swap() {
       );
       updateNfts();
       console.log('entangledPair', txnResult.epkey);
-      setEntangledPair(txnResult.epkey);
     },
     [anchorWallet, connection, updateNfts],
   );

@@ -84,9 +84,9 @@ export function Swap() {
   const connection = useConnection();
   const wallet = useWallet();
   const [entangledPair, setEntangledPair] = useState('');
-  const [nfts, setNfts] = useState<any>();
   const [imageMap, setImageMap] = useState({});
   const [loading, setLoading] = useState(false);
+  const [matchingNfts, setMatchingNfts] = useState<any>([]);
   const [bustedTokenAddresses, setBustedTokenAddresses] = useState<any>([]);
   const { setVisible } = useWalletModal();
 
@@ -109,34 +109,22 @@ export function Swap() {
   const loadProgram = useCallback(async () => {
     if (!anchorWallet) return;
     await loadTokenEntanglementProgram(anchorWallet, connection);
-    // console.log(anchorProgram);
   }, [anchorWallet, connection]);
 
   useEffect(() => {
     loadProgram();
   }, [loadProgram]);
 
-  const matchingNfts = useMemo(
-    () => (nfts || []).filter(nft => allMintAddresses.includes(nft.mint)),
-    [nfts],
-  );
-
   const updateNfts = useCallback(async () => {
+    if (!wallet?.publicKey) return null;
     setLoading(true);
-    const nextNfts = await getParsedNftAccountsByOwner({
+    const nfts = await getParsedNftAccountsByOwner({
       publicAddress: wallet?.publicKey,
       connection,
     });
-    setNfts(nextNfts);
-    setLoading(false);
-  }, [connection, wallet?.publicKey]);
-
-  useEffect(() => {
-    updateNfts();
-  }, [updateNfts]);
-
-  const updateBustedTokens = useCallback(async () => {
-    if (!wallet?.publicKey) return;
+    const nextMatchingNfts = (nfts || []).filter(nft =>
+      allMintAddresses.includes(nft.mint),
+    );
     const programId = new PublicKey(
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     );
@@ -144,7 +132,7 @@ export function Swap() {
       new PublicKey(wallet?.publicKey),
       { programId },
     );
-    const existingNftAddresses = matchingNfts.map(x => x.mint);
+    const existingNftAddresses = nextMatchingNfts.map(x => x.mint);
     const allTokenAddresses = allTokens?.value
       ?.filter(
         value => value.account.data.parsed.info.tokenAmount.amount !== '0',
@@ -155,21 +143,15 @@ export function Swap() {
       .filter(address => allMintAddresses.includes(address))
       .filter(address => !existingNftAddresses.includes(address))
       .map(address => ({ mint: address }));
-    console.log('nextBustedTokenAddresses', nextBustedTokenAddresses);
 
+    setMatchingNfts(nextMatchingNfts);
     setBustedTokenAddresses(nextBustedTokenAddresses);
-  }, [connection, matchingNfts, wallet?.publicKey]);
+    setLoading(false);
+  }, [connection, wallet?.publicKey]);
 
   useEffect(() => {
-    updateBustedTokens();
-  }, [updateBustedTokens]);
-
-  const updateAllTokens = useCallback(async () => {
-    setLoading(true);
-    await updateNfts();
-    await updateBustedTokens();
-    setLoading(false);
-  }, [updateBustedTokens, updateNfts]);
+    updateNfts();
+  }, [updateNfts]);
 
   const handleSubmit = useCallback(
     async ({ mintA, mintB, entangledPair }) => {
@@ -184,11 +166,11 @@ export function Swap() {
         mintB,
         entangledPair,
       );
-      updateAllTokens();
+      updateNfts();
       console.log('entangledPair', txnResult.epkey);
       setEntangledPair(txnResult.epkey);
     },
-    [anchorWallet, connection, updateAllTokens],
+    [anchorWallet, connection, updateNfts],
   );
 
   const fetchImages = useCallback(async () => {
@@ -206,11 +188,6 @@ export function Swap() {
   useEffect(() => {
     fetchImages();
   }, [fetchImages]);
-
-  useEffect(() => {
-    console.log('matchingNfts', matchingNfts);
-    console.log('entangledPair', entangledPair);
-  }, [matchingNfts, entangledPair]);
 
   const noTokensFound = useMemo(() => {
     return !bustedTokenAddresses?.length && !matchingNfts?.length;

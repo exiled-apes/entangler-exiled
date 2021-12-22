@@ -8,7 +8,7 @@ import {
 } from '../utils/entangler';
 import CircularProgress from '@mui/material/CircularProgress';
 import { PublicKey } from '@solana/web3.js';
-import { Button } from '@mui/material';
+import { Button, Link } from '@mui/material';
 import { useWalletModal } from '../contexts';
 import mintList from '../utils/mint-list.json';
 import { styled } from '@mui/system';
@@ -263,7 +263,8 @@ export function Swap() {
 
       <Footer>
         <About>
-          Art powered by Mircathor
+          Art powered by{' '}
+          <Link href="https://twitter.com/Mircathor">Mircathor</Link>
           {/* <Button
             onClick={() => {
               console.log('hi');

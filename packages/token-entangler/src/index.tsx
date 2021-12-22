@@ -15,6 +15,8 @@ import '@fontsource/sora';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+const rpcUrl = 'https://ssc-dao.genesisgo.net';
+
 ReactDOM.render(
   <React.StrictMode>
     <ConnectionProvider>

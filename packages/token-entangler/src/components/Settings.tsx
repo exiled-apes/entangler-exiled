@@ -1,8 +1,8 @@
 import React from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { ENDPOINTS, useColorMode, useConnectionConfig } from '../../contexts';
+import { ENDPOINTS, useColorMode, useConnectionConfig } from '../contexts';
 import { CopyOutlined } from '@ant-design/icons';
-import { ModalEnum, useModal, useWalletModal } from '../../contexts';
+import { ModalEnum, useModal, useWalletModal } from '../contexts';
 import {
   Box,
   Button,
@@ -228,7 +228,6 @@ export const Settings = ({ narrow }: { narrow: boolean }) => {
               })}
             </List>,
           )}
-        {themeSwitch}
       </React.Fragment>
     );
   } else {
@@ -280,7 +279,6 @@ export const Settings = ({ narrow }: { narrow: boolean }) => {
               </Button>
             );
           })}
-        {themeSwitch}
       </Stack>
     );
   }

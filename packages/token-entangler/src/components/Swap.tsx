@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { useConnection } from '../contexts';
 import { useWallet } from '@solana/wallet-adapter-react';
 import React, { useMemo, useEffect, useCallback, useState } from 'react';
@@ -7,30 +6,59 @@ import {
   loadTokenEntanglementProgram,
   swapEntanglement,
 } from '../utils/entangler';
+import CircularProgress from '@mui/material/CircularProgress';
 import { PublicKey } from '@solana/web3.js';
 import { Button } from '@mui/material';
-import SendIcon from '@mui/icons-material/Send';
-import { useWalletNfts } from '@nfteyez/sol-rayz-react';
-import Header from './Header';
 import mintList from '../utils/mint-list.json';
+import { styled } from '@mui/system';
+import { getParsedNftAccountsByOwner } from '@nfteyez/sol-rayz';
 
-// 5ijPCm1s8epSAxceSP3DRotJCe4yWirS98UGDTopr8oa
-const DAPE_TOKEN_ACCOUNT = 'oiyfj8dZ6x1Ts8ddD3SPvJN7VPvwayRUAY2dVsfBs3o';
+const SwapBox = styled('div')({
+  background: '#2a2a2a',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gridGap: 10,
+  padding: 50,
+  border: '2px solid #333333',
+  boxShadow: '0px 0px 50px rgba(0,0,0,0.5)',
+  borderRadius: 10,
+  marginTop: 50,
+});
 
-// const mapA2B = mintList.reduce((map, addresses) => {
-//   map[addresses[0]] = addresses[1];
-//   return map;
-// }, {});
+const SwapCard = styled('div')({
+  background: '#2a2a2a',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'column',
+  gridGap: 10,
+});
 
-// const mapB2A = mintList.reduce((map, addresses) => {
-//   map[addresses[1]] = addresses[0];
-//   return map;
-// }, {});
+const NftImage = styled('img')({
+  width: 200,
+  height: 200,
+  background: '#000',
+});
 
-export const Swap = () => {
+const Placeholder = styled('div')({
+  width: 200,
+  height: 200,
+  background: '#000',
+});
+
+const allMintAddresses = mintList.flat();
+
+export function Swap() {
   const connection = useConnection();
   const wallet = useWallet();
-  const [entangledPair, setEntangledPair] = React.useState('');
+  const [entangledPair, setEntangledPair] = useState('');
+  const [nfts, setNfts] = useState<any>();
+  const [imageMap, setImageMap] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [bustedTokenAddresses, setBustedTokenAddresses] = useState<any>([]);
 
   const anchorWallet = useMemo(() => {
     if (
@@ -41,7 +69,6 @@ export const Swap = () => {
     ) {
       return;
     }
-
     return {
       publicKey: wallet.publicKey,
       signAllTransactions: wallet.signAllTransactions,
@@ -51,119 +78,149 @@ export const Swap = () => {
 
   const loadProgram = useCallback(async () => {
     if (!anchorWallet) return;
-    const anchorProgram = await loadTokenEntanglementProgram(
-      anchorWallet,
-      connection,
-    );
-    console.log(anchorProgram);
-  }, [anchorWallet]);
+    await loadTokenEntanglementProgram(anchorWallet, connection);
+    // console.log(anchorProgram);
+  }, [anchorWallet, connection]);
 
   useEffect(() => {
     loadProgram();
   }, [loadProgram]);
 
-  useEffect(() => {
-    connection
-      .getTokenAccountBalance(new PublicKey(DAPE_TOKEN_ACCOUNT))
-      .then(res => {
-        console.log('DAPE TOKEN RESPONSE', res);
-      })
-      .catch(err => {
-        console.log('DAPE TOKEN ERROR', err);
-      });
-  }, []);
-
-  const handleSubmit = async ({ mintA, mintB, entangledPair }) => {
-    if (!anchorWallet) return;
-    console.log(mintA, mintB);
-
-    const txnResult = await swapEntanglement(
-      anchorWallet,
-      connection,
-      mintA,
-      mintB,
-      entangledPair,
-    );
-    setEntangledPair(txnResult.epkey);
-  };
-
-  //, isLoading, error
-  const { nfts } = useWalletNfts({
-    publicAddress: wallet?.publicKey,
-    connection,
-  });
-
-  const exiledApes = useMemo(
-    () => (nfts || []).filter(nft => mintList.flat().includes(nft.mint)),
+  const matchingNfts = useMemo(
+    () => (nfts || []).filter(nft => allMintAddresses.includes(nft.mint)),
     [nfts],
   );
 
-  const [imageMap, setImageMap] = useState({});
+  const updateNfts = useCallback(async () => {
+    setLoading(true);
+    const nextNfts = await getParsedNftAccountsByOwner({
+      publicAddress: wallet?.publicKey,
+      connection,
+    });
+    setNfts(nextNfts);
+    setLoading(false);
+  }, [connection, wallet?.publicKey]);
+
+  useEffect(() => {
+    updateNfts();
+  }, [updateNfts]);
+
+  const updateBustedTokens = useCallback(async () => {
+    if (!wallet?.publicKey) return;
+    const programId = new PublicKey(
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    );
+    const allTokens = await connection.getParsedTokenAccountsByOwner(
+      new PublicKey(wallet?.publicKey),
+      { programId },
+    );
+    const existingNftAddresses = matchingNfts.map(x => x.mint);
+    const allTokenAddresses = allTokens?.value
+      ?.filter(
+        value => value.account.data.parsed.info.tokenAmount.amount !== '0',
+      )
+      ?.map(value => value.account.data.parsed.info.mint);
+
+    const nextBustedTokenAddresses = allTokenAddresses
+      .filter(address => allMintAddresses.includes(address))
+      .filter(address => !existingNftAddresses.includes(address))
+      .map(address => ({ mint: address }));
+    console.log('nextBustedTokenAddresses', nextBustedTokenAddresses);
+
+    setBustedTokenAddresses(nextBustedTokenAddresses);
+  }, [connection, matchingNfts, wallet?.publicKey]);
+
+  useEffect(() => {
+    updateBustedTokens();
+  }, [updateBustedTokens]);
+
+  const updateAllTokens = useCallback(async () => {
+    setLoading(true);
+    await updateNfts();
+    await updateBustedTokens();
+    setLoading(false);
+  }, [updateBustedTokens, updateNfts]);
+
+  const handleSubmit = useCallback(
+    async ({ mintA, mintB, entangledPair }) => {
+      if (!anchorWallet) return;
+      console.log({ mintA, mintB });
+      setLoading(true);
+
+      const txnResult = await swapEntanglement(
+        anchorWallet,
+        connection,
+        mintA,
+        mintB,
+        entangledPair,
+      );
+      updateAllTokens();
+      console.log('entangledPair', txnResult.epkey);
+      setEntangledPair(txnResult.epkey);
+    },
+    [anchorWallet, connection, updateAllTokens],
+  );
 
   const fetchImages = useCallback(async () => {
-    if (exiledApes?.length) {
+    if (matchingNfts?.length) {
       const nextImages = {};
-      for (const ape of exiledApes) {
-        const response = await fetch(ape.data.uri);
+      for (const nft of matchingNfts) {
+        const response = await fetch(nft.data.uri);
         const data = await response.json();
-        nextImages[ape.mint] = data.image;
+        nextImages[nft.mint] = data.image;
       }
       setImageMap(state => ({ ...state, ...nextImages }));
     }
-  }, [exiledApes]);
+  }, [matchingNfts]);
 
   useEffect(() => {
     fetchImages();
   }, [fetchImages]);
 
   useEffect(() => {
-    console.log('exiledApes', exiledApes);
+    console.log('matchingNfts', matchingNfts);
     console.log('entangledPair', entangledPair);
-  }, [exiledApes, entangledPair]);
+  }, [matchingNfts, entangledPair]);
+
+  const renderItem = useCallback(
+    ape => {
+      const pair = mintList.find(addresses => addresses.includes(ape.mint));
+      const isOldToken = pair?.indexOf(ape.mint) === 1;
+      return (
+        <SwapCard key={ape.mint}>
+          {imageMap[ape.mint] ? (
+            <NftImage src={imageMap[ape.mint]} alt="ape" />
+          ) : (
+            <Placeholder />
+          )}
+          <Button
+            variant="contained"
+            onClick={async () => {
+              if (!pair) return;
+              const [mintA, mintB] = pair;
+              await handleSubmit({ mintA, mintB, entangledPair: '' });
+            }}
+          >
+            {isOldToken ? 'Swap for New Token' : 'Swap for Old Token'}
+          </Button>
+        </SwapCard>
+      );
+    },
+    [handleSubmit, imageMap],
+  );
 
   return (
     <React.Fragment>
-      <Header />
-
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gridGap: 10,
-          padding: 20,
-        }}
-      >
-        {exiledApes.map(ape => (
-          <div
-            key={ape.mint}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'column',
-              gridGap: 10,
-            }}
-          >
-            <img src={imageMap[ape.mint]} alt="ape" width="150" />
-            <Button
-              variant="contained"
-              onClick={async () => {
-                const pair = mintList.find(addresses =>
-                  addresses.includes(ape.mint),
-                );
-                if (!pair) return;
-                const [mintA, mintB] = pair;
-                // const [mintB, mintA] = pair;
-                await handleSubmit({ mintA, mintB, entangledPair: '' });
-              }}
-              endIcon={<SendIcon />}
-            >
-              Swap
-            </Button>
-          </div>
-        ))}
-      </div>
+      <SwapBox>
+        {loading ? (
+          <CircularProgress />
+        ) : (
+          <>
+            {bustedTokenAddresses.map(renderItem)}
+            {matchingNfts.map(renderItem)}
+          </>
+        )}
+      </SwapBox>
     </React.Fragment>
   );
-};
+}

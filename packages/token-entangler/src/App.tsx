@@ -7,7 +7,7 @@ import { styled } from '@mui/system';
 
 import Header from './components/Header';
 import { Swap } from './components/Swap';
-import DonateButton from './components/DonateButton';
+// import DonateButton from './components/DonateButton';
 
 const Root = styled('div')({
   display: 'flex',

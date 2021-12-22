@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
-
 import { Link } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -8,6 +7,7 @@ import { styled } from '@mui/system';
 
 import Header from './components/Header';
 import { Swap } from './components/Swap';
+import DonateButton from './components/DonateButton';
 
 const Root = styled('div')({
   display: 'flex',
@@ -69,13 +69,12 @@ export default function App() {
             <About>
               Art powered by{' '}
               <Link href="https://twitter.com/Mircathor">Mircathor</Link>
-              {/* <Button
-            onClick={() => {
-              console.log('hi');
-            }}
-          >
-            Donate 0.5 SOL
-          </Button> */}
+              {/* <DonateButton
+                amount={0.01}
+                to="EFS5TGLDKCLBi7qsNTQJ5Gb5qQo426eByEXjYwkwLGYW"
+              >
+                Donate 0.5 SOL
+              </DonateButton> */}
             </About>
           </Footer>
         </BrowserRouter>

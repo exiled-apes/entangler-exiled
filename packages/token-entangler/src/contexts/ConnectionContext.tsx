@@ -60,7 +60,7 @@ export type ENV = 'mainnet-beta' | 'testnet' | 'devnet' | 'localnet';
 export const ENDPOINTS = [
   {
     name: 'mainnet-beta' as ENV,
-    endpoint: 'https://api.metaplex.solana.com/',
+    endpoint: 'https://ssc-dao.genesysgo.net',
     ChainId: ChainId.MainnetBeta,
   },
   {

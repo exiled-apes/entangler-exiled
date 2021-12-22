@@ -7,13 +7,7 @@ import {
   Blockhash,
   FeeCalculator,
 } from '@solana/web3.js';
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { sendSignedTransaction } from '../utils/transactions';
 import {
   TokenInfo,
@@ -56,43 +50,6 @@ export const useLocalStorage = (): UseStorageReturnValue => {
   };
 };
 
-export function useLocalStorageState<T>(
-  key: string,
-  defaultState?: T,
-): [T, (key: string) => void] {
-  const localStorage = useLocalStorage();
-  const [state, setState] = useState(() => {
-    console.debug('Querying local storage', key);
-    const storedState = localStorage.getItem(key);
-    console.debug('Retrieved local storage', storedState);
-    if (storedState) {
-      return JSON.parse(storedState);
-    }
-    return defaultState;
-  });
-
-  const setLocalStorageState = useCallback(
-    newState => {
-      const changed = state !== newState;
-      if (!changed) {
-        return;
-      }
-      setState(newState);
-      if (newState === null) {
-        localStorage.removeItem(key);
-      } else {
-        try {
-          localStorage.setItem(key, JSON.stringify(newState));
-        } catch {
-          // ignore
-        }
-      }
-    },
-    [state, localStorage, key],
-  );
-
-  return [state, setLocalStorageState];
-}
 interface BlockhashAndFeeCalculator {
   blockhash: Blockhash;
   feeCalculator: FeeCalculator;
@@ -138,10 +95,7 @@ export function ConnectionProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [endpoint, setEndpoint] = useLocalStorageState(
-    'connectionEndpoint',
-    ENDPOINTS[0].endpoint,
-  );
+  const [endpoint, setEndpoint] = useState(ENDPOINTS[0].endpoint);
 
   const connection = useMemo(
     () => new Connection(endpoint, 'recent'),

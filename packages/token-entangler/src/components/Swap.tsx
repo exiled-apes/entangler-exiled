@@ -9,6 +9,7 @@ import {
 import CircularProgress from '@mui/material/CircularProgress';
 import { PublicKey } from '@solana/web3.js';
 import { Button } from '@mui/material';
+import { useWalletModal } from '../contexts';
 import mintList from '../utils/mint-list.json';
 import { styled } from '@mui/system';
 import { getParsedNftAccountsByOwner } from '@nfteyez/sol-rayz';
@@ -59,6 +60,7 @@ export function Swap() {
   const [imageMap, setImageMap] = useState({});
   const [loading, setLoading] = useState(false);
   const [bustedTokenAddresses, setBustedTokenAddresses] = useState<any>([]);
+  const { setVisible } = useWalletModal();
 
   const anchorWallet = useMemo(() => {
     if (
@@ -212,9 +214,13 @@ export function Swap() {
   return (
     <React.Fragment>
       <SwapBox>
-        {loading ? (
-          <CircularProgress />
-        ) : (
+        {loading && <CircularProgress />}
+        {!loading && !wallet?.connected && (
+          <Button variant="contained" onClick={() => setVisible(true)}>
+            Connect Wallet
+          </Button>
+        )}
+        {!loading && !!wallet?.connected && (
           <>
             {bustedTokenAddresses.map(renderItem)}
             {matchingNfts.map(renderItem)}

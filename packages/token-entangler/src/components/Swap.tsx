@@ -26,7 +26,8 @@ const SwapBox = styled('div')({
   border: '2px solid #333333',
   boxShadow: '0px 0px 50px rgba(0,0,0,0.5)',
   borderRadius: 10,
-  marginTop: 50,
+  marginTop: 40,
+  flex: '1 1 auto',
 });
 
 const SwapCard = styled('div')({
@@ -48,6 +49,30 @@ const Placeholder = styled('div')({
   width: 200,
   height: 200,
   background: '#000',
+});
+
+const Title = styled('h1')({
+  color: '#ff8b0d',
+  fontWeight: 'bold',
+  fontSize: '3rem',
+});
+
+const About = styled('p')({
+  color: '#aaaaaa',
+  maxWidth: 550,
+  textAlign: 'center',
+});
+
+const Footer = styled('div')({
+  width: '100%',
+  padding: 15,
+  background: '#2a2a2a',
+  borderTop: '2px solid #333333',
+  marginTop: 40,
+  textAlign: 'center',
+  display: 'fleX',
+  justifyContent: 'center',
+  alignItems: 'center',
 });
 
 const allMintAddresses = mintList.flat();
@@ -213,6 +238,14 @@ export function Swap() {
 
   return (
     <React.Fragment>
+      <Title>Ape Swap.</Title>
+      {!loading && !!wallet?.connected && (
+        <About>
+          Initial swap is 1 SOL all swaps after that will be free. You can swap
+          back and forth as many times as you'd like as long as you own the
+          token.
+        </About>
+      )}
       <SwapBox>
         {loading && <CircularProgress />}
         {!loading && !wallet?.connected && (
@@ -227,6 +260,19 @@ export function Swap() {
           </>
         )}
       </SwapBox>
+
+      <Footer>
+        <About>
+          Art powered by Mircarthur:{' '}
+          <Button
+            onClick={() => {
+              console.log('hi');
+            }}
+          >
+            Donate 0.5 SOL
+          </Button>
+        </About>
+      </Footer>
     </React.Fragment>
   );
 }

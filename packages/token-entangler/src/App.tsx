@@ -68,7 +68,8 @@ export default function App() {
           <Footer>
             <About>
               Art powered by{' '}
-              <Link href="https://twitter.com/Mircathor">Mircathor</Link>:
+              <Link href="https://twitter.com/Mircathor">Mircathor</Link>,
+              Donate:
               <br />
               <code>EFS5TGLDKCLBi7qsNTQJ5Gb5qQo426eByEXjYwkwLGYW</code>
               {/* <DonateButton

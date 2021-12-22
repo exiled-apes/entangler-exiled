@@ -1,4 +1,5 @@
 /// <reference types="react" />
+/// <reference types="node" />
 import { AccountInfo, PublicKey } from '@solana/web3.js';
 import { MintInfo } from '@solana/spl-token';
 import { TokenAccount } from '../../models';

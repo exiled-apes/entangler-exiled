@@ -12,6 +12,7 @@ import {
   TransactionSignature,
 } from '@solana/web3.js';
 import log from 'loglevel';
+import {AnchorWallet} from "@solana/wallet-adapter-react";
 
 interface BlockhashAndFeeCalculator {
   blockhash: Blockhash;
@@ -47,7 +48,7 @@ export const explorerLinkFor = (
 
 export const sendTransactionWithRetryWithKeypair = async (
   connection: Connection,
-  wallet: Keypair,
+  wallet: AnchorWallet,
   instructions: TransactionInstruction[],
   signers: Keypair[],
   commitment: Commitment = 'singleGossip',
@@ -70,12 +71,7 @@ export const sendTransactionWithRetryWithKeypair = async (
       ...signers.map(s => s.publicKey),
     );
   }
-
-  if (signers.length > 0) {
-    transaction.sign(...[wallet, ...signers]);
-  } else {
-    transaction.sign(wallet);
-  }
+  await wallet?.signTransaction(transaction);
 
   if (beforeSend) {
     beforeSend();

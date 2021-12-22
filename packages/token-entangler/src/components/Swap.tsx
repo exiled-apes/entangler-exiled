@@ -263,14 +263,14 @@ export function Swap() {
 
       <Footer>
         <About>
-          Art powered by Mircarthur:{' '}
-          <Button
+          Art powered by Mircarthur
+          {/* <Button
             onClick={() => {
               console.log('hi');
             }}
           >
             Donate 0.5 SOL
-          </Button>
+          </Button> */}
         </About>
       </Footer>
     </React.Fragment>

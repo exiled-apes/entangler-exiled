@@ -214,7 +214,7 @@ export function Swap() {
 
   const noTokensFound = useMemo(() => {
     return !bustedTokenAddresses?.length && !matchingNfts?.length;
-  }, []);
+  }, [bustedTokenAddresses?.length, matchingNfts?.length]);
 
   const renderItem = useCallback(
     ape => {

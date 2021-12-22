@@ -8,11 +8,19 @@ import {
 } from '../utils/entangler';
 import CircularProgress from '@mui/material/CircularProgress';
 import { PublicKey } from '@solana/web3.js';
-import { Button, Link } from '@mui/material';
+import { Button } from '@mui/material';
 import { useWalletModal } from '../contexts';
 import mintList from '../utils/mint-list.json';
 import { styled } from '@mui/system';
 import { getParsedNftAccountsByOwner } from '@nfteyez/sol-rayz';
+
+const SwapRoot = styled('div')({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'flex-start',
+  flexDirection: 'column',
+  flex: '1 1 auto',
+});
 
 const SwapBox = styled('div')({
   background: '#2a2a2a',
@@ -27,7 +35,6 @@ const SwapBox = styled('div')({
   boxShadow: '0px 0px 50px rgba(0,0,0,0.5)',
   borderRadius: 10,
   marginTop: 40,
-  flex: '1 1 auto',
 });
 
 const SwapCard = styled('div')({
@@ -61,18 +68,6 @@ const About = styled('p')({
   color: '#aaaaaa',
   maxWidth: 550,
   textAlign: 'center',
-});
-
-const Footer = styled('div')({
-  width: '100%',
-  padding: 15,
-  background: '#2a2a2a',
-  borderTop: '2px solid #333333',
-  marginTop: 40,
-  textAlign: 'center',
-  display: 'fleX',
-  justifyContent: 'center',
-  alignItems: 'center',
 });
 
 const allMintAddresses = mintList.flat();
@@ -237,7 +232,7 @@ export function Swap() {
   );
 
   return (
-    <React.Fragment>
+    <SwapRoot>
       <Title>Ape Swap.</Title>
       {!loading && !!wallet?.connected && (
         <About>
@@ -260,20 +255,6 @@ export function Swap() {
           </>
         )}
       </SwapBox>
-
-      <Footer>
-        <About>
-          Art powered by{' '}
-          <Link href="https://twitter.com/Mircathor">Mircathor</Link>
-          {/* <Button
-            onClick={() => {
-              console.log('hi');
-            }}
-          >
-            Donate 0.5 SOL
-          </Button> */}
-        </About>
-      </Footer>
-    </React.Fragment>
+    </SwapRoot>
   );
 }

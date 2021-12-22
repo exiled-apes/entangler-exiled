@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 
+import { Link } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { styled } from '@mui/system';
@@ -14,6 +15,24 @@ const Root = styled('div')({
   alignItems: 'center',
   justifyContent: 'center',
   minHeight: '100vh',
+});
+
+const Footer = styled('div')({
+  width: '100%',
+  padding: 15,
+  background: '#2a2a2a',
+  borderTop: '2px solid #333333',
+  marginTop: 40,
+  textAlign: 'center',
+  display: 'fleX',
+  justifyContent: 'center',
+  alignItems: 'center',
+});
+
+const About = styled('p')({
+  color: '#aaaaaa',
+  maxWidth: 550,
+  textAlign: 'center',
 });
 
 export default function App() {
@@ -46,6 +65,19 @@ export default function App() {
           <Switch>
             <Route path="/" component={Swap} />
           </Switch>
+          <Footer>
+            <About>
+              Art powered by{' '}
+              <Link href="https://twitter.com/Mircathor">Mircathor</Link>
+              {/* <Button
+            onClick={() => {
+              console.log('hi');
+            }}
+          >
+            Donate 0.5 SOL
+          </Button> */}
+            </About>
+          </Footer>
         </BrowserRouter>
       </ThemeProvider>
     </Root>

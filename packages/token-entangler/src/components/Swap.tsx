@@ -263,7 +263,7 @@ export function Swap() {
 
       <Footer>
         <About>
-          Art powered by Mircarthur
+          Art powered by Mircathor
           {/* <Button
             onClick={() => {
               console.log('hi');

@@ -65,6 +65,13 @@ const Title = styled('h1')({
   fontSize: '3rem',
 });
 
+const Title2 = styled('h1')({
+  color: '#ff8b0d',
+  fontWeight: 'bold',
+  fontSize: '2rem',
+  display: 'block',
+});
+
 const About = styled('p')({
   color: '#aaaaaa',
   maxWidth: 550,
@@ -205,6 +212,10 @@ export function Swap() {
     console.log('entangledPair', entangledPair);
   }, [matchingNfts, entangledPair]);
 
+  const noTokensFound = useMemo(() => {
+    return !bustedTokenAddresses?.length && !matchingNfts?.length;
+  }, []);
+
   const renderItem = useCallback(
     ape => {
       const pair = mintList.find(addresses => addresses.includes(ape.mint));
@@ -254,6 +265,19 @@ export function Swap() {
             {bustedTokenAddresses.map(renderItem)}
             {matchingNfts.map(renderItem)}
           </>
+        )}
+        {!loading && !!wallet?.connected && noTokensFound && (
+          <div style={{ textAlign: 'center' }}>
+            <Title2>NGMI</Title2>
+            <Button
+              variant="outlined"
+              target="_blank"
+              rel="noopener noreferrer"
+              href="https://magiceden.io/marketplace/exiled_degen_ape_academy"
+            >
+              Redeem yourself
+            </Button>
+          </div>
         )}
       </SwapBox>
     </SwapRoot>

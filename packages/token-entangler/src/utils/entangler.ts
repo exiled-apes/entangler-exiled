@@ -24,6 +24,7 @@ import { BN } from '@project-serum/anchor';
 import { getEdition, getMetadata, getTokenAmount } from './accounts';
 import mints from './valid_mints.json';
 import { extendBorsh } from './borsh';
+import {AnchorWallet} from "@solana/wallet-adapter-react";
 export const TOKEN_ENTANGLER = 'token_entangler';
 export const ESCROW = 'escrow';
 export const A = 'A';
@@ -218,7 +219,7 @@ export const getPriceWithMantissa = async (
 };
 
 export async function loadTokenEntanglementProgram(
-  anchorWallet: anchor.Wallet,
+  anchorWallet: AnchorWallet,
   connection: Connection,
 ) {
   const provider = new anchor.Provider(connection, anchorWallet, {
@@ -439,7 +440,7 @@ export function chunks(array, size) {
 }
 
 export const swapEntanglement = async (
-  anchorWallet: anchor.Wallet,
+  anchorWallet: AnchorWallet,
   connection: Connection,
   mintA: string | null,
   mintB: string | null,

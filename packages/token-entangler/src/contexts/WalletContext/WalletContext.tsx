@@ -1,5 +1,6 @@
 import { WalletAdapter, WalletError } from '@solana/wallet-adapter-base';
 import {
+  AnchorWallet,
   useWallet,
   WalletProvider as BaseWalletProvider,
 } from '@solana/wallet-adapter-react';
@@ -202,6 +203,6 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
 };
 
 export type WalletSigner = Pick<
-  WalletAdapter,
+  AnchorWallet,
   'publicKey' | 'signTransaction' | 'signAllTransactions'
 >;

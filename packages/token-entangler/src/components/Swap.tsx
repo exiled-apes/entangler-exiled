@@ -1,12 +1,14 @@
 import { useConnection } from '../contexts';
 import { useWallet } from '@solana/wallet-adapter-react';
 import React, { useMemo, useEffect, useCallback, useState } from 'react';
+import { useAnchorWallet } from '@solana/wallet-adapter-react';
 import * as anchor from '@project-serum/anchor';
 import CircularProgress from '@mui/material/CircularProgress';
 import { PublicKey } from '@solana/web3.js';
 import { Button } from '@mui/material';
 import { styled } from '@mui/system';
 import { getParsedNftAccountsByOwner } from '@nfteyez/sol-rayz';
+import { ensureAtaExists } from '../utils/ensureAtaExists';
 
 import {
   loadTokenEntanglementProgram,
@@ -89,21 +91,7 @@ export function Swap() {
   const [bustedTokenAddresses, setBustedTokenAddresses] = useState<any>([]);
   const { setVisible } = useWalletModal();
 
-  const anchorWallet = useMemo(() => {
-    if (
-      !wallet ||
-      !wallet.publicKey ||
-      !wallet.signAllTransactions ||
-      !wallet.signTransaction
-    ) {
-      return;
-    }
-    return {
-      publicKey: wallet.publicKey,
-      signAllTransactions: wallet.signAllTransactions,
-      signTransaction: wallet.signTransaction,
-    } as anchor.Wallet;
-  }, [wallet]);
+  const anchorWallet = useAnchorWallet();
 
   const loadProgram = useCallback(async () => {
     if (!anchorWallet) return;
@@ -157,6 +145,9 @@ export function Swap() {
       if (!anchorWallet) return;
       console.log({ mintA, mintB });
       setLoading(true);
+
+      await ensureAtaExists(anchorWallet, connection, mintA);
+      // await ensureAtaExists(anchorWallet, connection, mintB);
 
       const txnResult = await swapEntanglement(
         anchorWallet,

@@ -11,7 +11,7 @@
     "node": ">=14.17"
   },
   "scripts": {
-    "clean": "rm -rf node_modules && rm -rf packages/token-entangler/node_modules && rm -rf packages/common/node_modules",
+    "clean": "rm -rf node_modules && rm -rf packages/token-entangler/node_modules && rm -rf packages/common/node_modules && rm -rf packages/common/dist && rm -rf packages/token-entangler/build",
     "bootstrap": "lerna link && lerna bootstrap",
     "build": "lerna run build",
     "lerna": "lerna",

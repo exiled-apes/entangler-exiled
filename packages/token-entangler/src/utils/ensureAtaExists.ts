@@ -99,7 +99,6 @@ export async function ensureAtaExists(
       tokenAccountKey,
     );
     if (accountInfo.value === null) {
-      console.log('\naccountInfo.value === null');
       instructions.push(
         createAssociatedTokenAccountInstruction(
           tokenAccountKey,

@@ -1,6 +1,7 @@
 import { useConnection } from '../contexts';
 import { useWallet } from '@solana/wallet-adapter-react';
 import React, { useMemo, useEffect, useCallback, useState } from 'react';
+import { useAnchorWallet } from '@solana/wallet-adapter-react';
 import * as anchor from '@project-serum/anchor';
 import CircularProgress from '@mui/material/CircularProgress';
 import { PublicKey } from '@solana/web3.js';
@@ -90,21 +91,7 @@ export function Swap() {
   const [bustedTokenAddresses, setBustedTokenAddresses] = useState<any>([]);
   const { setVisible } = useWalletModal();
 
-  const anchorWallet = useMemo(() => {
-    if (
-      !wallet ||
-      !wallet.publicKey ||
-      !wallet.signAllTransactions ||
-      !wallet.signTransaction
-    ) {
-      return;
-    }
-    return {
-      publicKey: wallet.publicKey,
-      signAllTransactions: wallet.signAllTransactions,
-      signTransaction: wallet.signTransaction,
-    } as anchor.Wallet;
-  }, [wallet]);
+  const anchorWallet = useAnchorWallet();
 
   const loadProgram = useCallback(async () => {
     if (!anchorWallet) return;

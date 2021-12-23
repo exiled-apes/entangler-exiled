@@ -16,6 +16,7 @@ import {
 } from '@solana/spl-token-registry';
 import { WalletSigner } from './WalletContext/WalletContext';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import {AnchorWallet} from "@solana/wallet-adapter-react";
 
 type UseStorageReturnValue = {
   getItem: (key: string) => string;
@@ -217,7 +218,7 @@ export enum SequenceType {
 
 export const sendTransactionWithRetry = async (
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: AnchorWallet,
   instructions: TransactionInstruction[],
   signers: Keypair[],
   commitment: Commitment = 'singleGossip',

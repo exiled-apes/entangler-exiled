@@ -14,9 +14,8 @@ import {
   TokenListProvider,
   ENV as ChainId,
 } from '@solana/spl-token-registry';
-import { WalletSigner } from './WalletContext/WalletContext';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-import {AnchorWallet} from "@solana/wallet-adapter-react";
+import { AnchorWallet } from '@solana/wallet-adapter-react';
 
 type UseStorageReturnValue = {
   getItem: (key: string) => string;

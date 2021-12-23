@@ -2,7 +2,6 @@ import { useConnection } from '../contexts';
 import { useWallet } from '@solana/wallet-adapter-react';
 import React, { useMemo, useEffect, useCallback, useState } from 'react';
 import { useAnchorWallet } from '@solana/wallet-adapter-react';
-import * as anchor from '@project-serum/anchor';
 import CircularProgress from '@mui/material/CircularProgress';
 import { PublicKey } from '@solana/web3.js';
 import { Button } from '@mui/material';

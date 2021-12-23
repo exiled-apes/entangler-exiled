@@ -7,7 +7,7 @@ import { PublicKey } from '@solana/web3.js';
 import { Button } from '@mui/material';
 import { styled } from '@mui/system';
 import { getParsedNftAccountsByOwner } from '@nfteyez/sol-rayz';
-// import { ensureAtaExists } from '../utils/ensureAtaExists';
+import { ensureAtaExists } from '../utils/ensureAtaExists';
 
 import {
   loadTokenEntanglementProgram,
@@ -140,20 +140,19 @@ export function Swap() {
   }, [updateNfts]);
 
   const handleSubmit = useCallback(
-    async ({ mintA, mintB, entangledPair }) => {
+    async ({ mintA, mintB, currentMint }) => {
       if (!anchorWallet) return;
       console.log({ mintA, mintB });
       setLoading(true);
 
-      // await ensureAtaExists(anchorWallet, connection, mintA);
-      // await ensureAtaExists(anchorWallet, connection, mintB);
+      await ensureAtaExists(anchorWallet, connection, currentMint);
 
       const txnResult = await swapEntanglement(
         anchorWallet,
         connection,
         mintA,
         mintB,
-        entangledPair,
+        '',
       );
       updateNfts();
       console.log('entangledPair', txnResult.epkey);
@@ -197,7 +196,7 @@ export function Swap() {
             onClick={async () => {
               if (!pair) return;
               const [mintA, mintB] = pair;
-              await handleSubmit({ mintA, mintB, entangledPair: '' });
+              await handleSubmit({ mintA, mintB, currentMint: ape.mint });
             }}
           >
             {isOldToken ? 'Swap for New Token' : 'Swap for Old Token'}

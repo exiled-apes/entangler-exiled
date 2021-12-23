@@ -13,8 +13,9 @@
   "scripts": {
     "clean": "rm -rf node_modules && rm -rf packages/token-entangler/node_modules && rm -rf packages/common/node_modules && rm -rf packages/common/dist && rm -rf packages/token-entangler/build",
     "bootstrap": "lerna link && lerna bootstrap",
-    "build": "lerna run build",
     "lerna": "lerna",
+    "build": "lerna run build",
+    "build-oyster": "lerna run build --stream --scope @oyster/common",
     "build-entangler": "lerna run build --stream --scope @oyster/common --scope token-entangler",
     "start": "cross-env CI=true lerna run start --scope @oyster/common --stream --parallel --scope token-entangler",
     "lint": "prettier -c 'packages/*/{src,test}/**/*.ts' && npm run lint:eslint",

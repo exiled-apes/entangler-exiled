@@ -17,9 +17,7 @@ export const DefaultModal = (props: any) => {
         ...bodyStyle,
       }}
       footer={null}
-      width={
-        width || 400
-      }
+      width={width || 400}
       {...rest}
     >
       {children}

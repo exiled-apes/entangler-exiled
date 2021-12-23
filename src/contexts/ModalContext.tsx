@@ -1,9 +1,9 @@
-import React, { useState, useContext, useCallback } from 'react';
+import React, { useState, useContext, useCallback } from "react";
 
-import { WalletModal } from './WalletContext/WalletContext';
+import { WalletModal } from "./WalletContext";
 
 export enum ModalEnum {
-  WALLET = 'wallet',
+  WALLET = "wallet",
 }
 
 type ModalContextProps = {
@@ -39,7 +39,7 @@ export const ModalProvider: React.FC = ({ children }) => {
 export const useModal = (): ModalContextProps => {
   const context = useContext(ModalContext);
   if (context === undefined) {
-    throw new Error('useModal must be used within a ModalProvider');
+    throw new Error("useModal must be used within a ModalProvider");
   }
   return context;
 };

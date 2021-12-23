@@ -7,7 +7,7 @@ import { PublicKey } from '@solana/web3.js';
 import { Button } from '@mui/material';
 import { styled } from '@mui/system';
 import { getParsedNftAccountsByOwner } from '@nfteyez/sol-rayz';
-import { ensureAtaExists } from '../utils/ensureAtaExists';
+// import { ensureAtaExists } from '../utils/ensureAtaExists';
 
 import {
   loadTokenEntanglementProgram,
@@ -145,7 +145,7 @@ export function Swap() {
       console.log({ mintA, mintB });
       setLoading(true);
 
-      await ensureAtaExists(anchorWallet, connection, mintA);
+      // await ensureAtaExists(anchorWallet, connection, mintA);
       // await ensureAtaExists(anchorWallet, connection, mintB);
 
       const txnResult = await swapEntanglement(

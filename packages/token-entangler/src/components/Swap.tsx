@@ -36,7 +36,7 @@ const SwapBox = styled('div')({
   border: '2px solid #333333',
   boxShadow: '0px 0px 50px rgba(0,0,0,0.5)',
   borderRadius: 10,
-  marginTop: 40,
+  marginTop: 30,
 });
 
 const SwapCard = styled('div')({
@@ -75,7 +75,7 @@ const Title2 = styled('h1')({
 
 const About = styled('p')({
   color: '#aaaaaa',
-  maxWidth: 550,
+  maxWidth: 530,
   textAlign: 'center',
 });
 
@@ -214,7 +214,7 @@ export function Swap() {
         <About>
           Initial swap is 1 SOL all swaps after that will be free. You can swap
           back and forth as many times as you'd like as long as you own the
-          token.
+          token. There will be two transactions you have to approve.
         </About>
       )}
       <SwapBox>

@@ -6,16 +6,17 @@ import {
   TransactionInstruction,
   Blockhash,
   FeeCalculator,
-} from '@solana/web3.js';
-import React, { useContext, useEffect, useMemo, useState } from 'react';
-import { sendSignedTransaction } from '../utils/transactions';
+} from "@solana/web3.js";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   TokenInfo,
   TokenListProvider,
   ENV as ChainId,
-} from '@solana/spl-token-registry';
-import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-import { AnchorWallet } from '@solana/wallet-adapter-react';
+} from "@solana/spl-token-registry";
+import { WalletNotConnectedError } from "@solana/wallet-adapter-base";
+import { AnchorWallet } from "@solana/wallet-adapter-react";
+
+import { sendSignedTransaction } from "../utils/transactions";
 
 type UseStorageReturnValue = {
   getItem: (key: string) => string;
@@ -24,10 +25,10 @@ type UseStorageReturnValue = {
 };
 
 export const useLocalStorage = (): UseStorageReturnValue => {
-  const isBrowser: boolean = ((): boolean => typeof window !== 'undefined')();
+  const isBrowser: boolean = ((): boolean => typeof window !== "undefined")();
 
   const getItem = (key: string): string => {
-    return isBrowser ? window.localStorage[key] : '';
+    return isBrowser ? window.localStorage[key] : "";
   };
 
   const setItem = (key: string, value: string): boolean => {
@@ -55,17 +56,17 @@ interface BlockhashAndFeeCalculator {
   feeCalculator: FeeCalculator;
 }
 
-export type ENV = 'mainnet-beta' | 'testnet' | 'devnet' | 'localnet';
+export type ENV = "mainnet-beta" | "testnet" | "devnet" | "localnet";
 
 export const ENDPOINTS = [
   {
-    name: 'mainnet-beta' as ENV,
-    endpoint: 'https://ssc-dao.genesysgo.net',
+    name: "mainnet-beta" as ENV,
+    endpoint: "https://ssc-dao.genesysgo.net",
     ChainId: ChainId.MainnetBeta,
   },
   {
-    name: 'devnet' as ENV,
-    endpoint: 'https://api.devnet.solana.com/',
+    name: "devnet" as ENV,
+    endpoint: "https://api.devnet.solana.com/",
     ChainId: ChainId.Devnet,
   },
 ];
@@ -84,7 +85,7 @@ interface ConnectionConfig {
 const ConnectionContext = React.createContext<ConnectionConfig>({
   endpoint: DEFAULT,
   setEndpoint: () => {},
-  connection: new Connection(DEFAULT, 'recent'),
+  connection: new Connection(DEFAULT, "recent"),
   env: ENDPOINTS[0].name,
   tokens: [],
   tokenMap: new Map<string, TokenInfo>(),
@@ -98,23 +99,24 @@ export function ConnectionProvider({
   const [endpoint, setEndpoint] = useState(ENDPOINTS[0].endpoint);
 
   const connection = useMemo(
-    () => new Connection(endpoint, 'recent'),
-    [endpoint],
+    () => new Connection(endpoint, "recent"),
+    [endpoint]
   );
 
   const env =
-    ENDPOINTS.find(end => end.endpoint === endpoint)?.name || ENDPOINTS[0].name;
+    ENDPOINTS.find((end) => end.endpoint === endpoint)?.name ||
+    ENDPOINTS[0].name;
 
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
   const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map());
   useEffect(() => {
     // fetch token files
-    new TokenListProvider().resolve().then(container => {
+    new TokenListProvider().resolve().then((container) => {
       const list = container
-        .excludeByTag('nft')
+        .excludeByTag("nft")
         .filterByChainId(
-          ENDPOINTS.find(end => end.endpoint === endpoint)?.ChainId ||
-            ChainId.MainnetBeta,
+          ENDPOINTS.find((end) => end.endpoint === endpoint)?.ChainId ||
+            ChainId.MainnetBeta
         )
         .getList();
 
@@ -134,7 +136,7 @@ export function ConnectionProvider({
   useEffect(() => {
     const id = connection.onAccountChange(
       Keypair.generate().publicKey,
-      () => {},
+      () => {}
     );
     return () => {
       connection.removeAccountChangeListener(id);
@@ -181,16 +183,16 @@ export function useConnectionConfig() {
 
 export const getErrorForTransaction = async (
   connection: Connection,
-  txid: string,
+  txid: string
 ) => {
   // wait for all confirmation before geting transaction
-  await connection.confirmTransaction(txid, 'max');
+  await connection.confirmTransaction(txid, "max");
 
   const tx = await connection.getParsedConfirmedTransaction(txid);
 
   const errors: string[] = [];
   if (tx?.meta && tx.meta.logMessages) {
-    tx.meta.logMessages.forEach(log => {
+    tx.meta.logMessages.forEach((log) => {
       const regex = /Error: (.*)/gm;
       let m;
       while ((m = regex.exec(log)) !== null) {
@@ -220,26 +222,26 @@ export const sendTransactionWithRetry = async (
   wallet: AnchorWallet,
   instructions: TransactionInstruction[],
   signers: Keypair[],
-  commitment: Commitment = 'singleGossip',
+  commitment: Commitment = "singleGossip",
   includesFeePayer: boolean = false,
   block?: BlockhashAndFeeCalculator,
-  beforeSend?: () => void,
+  beforeSend?: () => void
 ): Promise<string | { txid: string; slot: number }> => {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
   let transaction = new Transaction();
-  instructions.forEach(instruction => transaction.add(instruction));
+  instructions.forEach((instruction) => transaction.add(instruction));
   transaction.recentBlockhash = (
     block || (await connection.getRecentBlockhash(commitment))
   ).blockhash;
 
   if (includesFeePayer) {
-    transaction.setSigners(...signers.map(s => s.publicKey));
+    transaction.setSigners(...signers.map((s) => s.publicKey));
   } else {
     transaction.setSigners(
       // fee payed by the wallet owner
       wallet.publicKey,
-      ...signers.map(s => s.publicKey),
+      ...signers.map((s) => s.publicKey)
     );
   }
 
@@ -250,14 +252,14 @@ export const sendTransactionWithRetry = async (
     try {
       transaction = await wallet.signTransaction(transaction);
     } catch {
-      return 'Failed to sign transaction';
+      return "Failed to sign transaction";
     }
   }
 
   if (beforeSend) {
     beforeSend();
   }
-  console.log('About to send');
+  console.log("About to send");
   try {
     const { txid, slot } = await sendSignedTransaction({
       connection,
@@ -267,6 +269,6 @@ export const sendTransactionWithRetry = async (
     return { txid, slot };
   } catch (error) {
     console.error(error);
-    return 'See console logs';
+    return "See console logs";
   }
 };

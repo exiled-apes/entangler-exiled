@@ -5,30 +5,32 @@ import {
   PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
-} from '@solana/web3.js';
-
-import { Connection as ContextConnection } from '../contexts';
-import { deserializeUnchecked } from 'borsh';
-import * as anchor from '@project-serum/anchor';
-import {
-  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-  TOKEN_ENTANGLEMENT_PROGRAM_ID,
-  WRAPPED_SOL_MINT,
-} from './ids';
+} from "@solana/web3.js";
+import { AnchorWallet as Wallet } from "@solana/wallet-adapter-react";
+import { sendTransactionWithRetry } from "../contexts/ConnectionContext";
+import { deserializeUnchecked } from "borsh";
+import * as anchor from "@project-serum/anchor";
+import { AnchorWallet } from "@solana/wallet-adapter-react";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   Token,
   TOKEN_PROGRAM_ID,
-} from '@solana/spl-token';
-import { BN } from '@project-serum/anchor';
-import { getEdition, getMetadata, getTokenAmount } from './accounts';
-import mints from './valid_mints.json';
-import { extendBorsh } from './borsh';
-import {AnchorWallet} from "@solana/wallet-adapter-react";
-export const TOKEN_ENTANGLER = 'token_entangler';
-export const ESCROW = 'escrow';
-export const A = 'A';
-export const B = 'B';
+} from "@solana/spl-token";
+import { BN } from "@project-serum/anchor";
+
+import { getEdition, getMetadata, getTokenAmount } from "./accounts";
+import mints from "./valid_mints.json";
+import { extendBorsh } from "./borsh";
+import {
+  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+  TOKEN_ENTANGLEMENT_PROGRAM_ID,
+  WRAPPED_SOL_MINT,
+} from "./ids";
+
+export const TOKEN_ENTANGLER = "token_entangler";
+export const ESCROW = "escrow";
+export const A = "A";
+export const B = "B";
 
 export class Creator {
   address: PublicKey;
@@ -109,39 +111,39 @@ export const METADATA_SCHEMA = new Map<any, any>([
   [
     Data,
     {
-      kind: 'struct',
+      kind: "struct",
       fields: [
-        ['name', 'string'],
-        ['symbol', 'string'],
-        ['uri', 'string'],
-        ['sellerFeeBasisPoints', 'u16'],
-        ['creators', { kind: 'option', type: [Creator] }],
+        ["name", "string"],
+        ["symbol", "string"],
+        ["uri", "string"],
+        ["sellerFeeBasisPoints", "u16"],
+        ["creators", { kind: "option", type: [Creator] }],
       ],
     },
   ],
   [
     Creator,
     {
-      kind: 'struct',
+      kind: "struct",
       fields: [
-        ['address', 'pubkey'],
-        ['verified', 'u8'],
-        ['share', 'u8'],
+        ["address", "pubkey"],
+        ["verified", "u8"],
+        ["share", "u8"],
       ],
     },
   ],
   [
     Metadata,
     {
-      kind: 'struct',
+      kind: "struct",
       fields: [
-        ['key', 'u8'],
-        ['updateAuthority', 'pubkey'],
-        ['mint', 'pubkey'],
-        ['data', Data],
-        ['primarySaleHappened', 'u8'], // bool
-        ['isMutable', 'u8'], // bool
-        ['editionNonce', { kind: 'option', type: 'u8' }],
+        ["key", "u8"],
+        ["updateAuthority", "pubkey"],
+        ["mint", "pubkey"],
+        ["data", Data],
+        ["primarySaleHappened", "u8"], // bool
+        ["isMutable", "u8"], // bool
+        ["editionNonce", { kind: "option", type: "u8" }],
       ],
     },
   ],
@@ -150,27 +152,27 @@ export const METADATA_SCHEMA = new Map<any, any>([
 extendBorsh();
 
 // eslint-disable-next-line no-control-regex
-const METADATA_REPLACE = new RegExp('\u0000', 'g');
+const METADATA_REPLACE = new RegExp("\u0000", "g");
 
 export const decodeMetadata = (buffer: Buffer): Metadata => {
   const metadata = deserializeUnchecked(
     METADATA_SCHEMA,
     Metadata,
-    buffer,
+    buffer
   ) as Metadata;
-  metadata.data.name = metadata.data.name.replace(METADATA_REPLACE, '');
-  metadata.data.uri = metadata.data.uri.replace(METADATA_REPLACE, '');
-  metadata.data.symbol = metadata.data.symbol.replace(METADATA_REPLACE, '');
+  metadata.data.name = metadata.data.name.replace(METADATA_REPLACE, "");
+  metadata.data.uri = metadata.data.uri.replace(METADATA_REPLACE, "");
+  metadata.data.symbol = metadata.data.symbol.replace(METADATA_REPLACE, "");
   return metadata;
 };
 
 export const getTokenEntanglement = async (
-  mintA: anchor.web3.PublicKey,
-  mintB: anchor.web3.PublicKey,
+  mintA: PublicKey,
+  mintB: PublicKey
 ): Promise<[PublicKey, number]> => {
-  return await anchor.web3.PublicKey.findProgramAddress(
+  return await PublicKey.findProgramAddress(
     [Buffer.from(TOKEN_ENTANGLER), mintA.toBuffer(), mintB.toBuffer()],
-    TOKEN_ENTANGLEMENT_PROGRAM_ID,
+    TOKEN_ENTANGLEMENT_PROGRAM_ID
   );
 };
 
@@ -178,11 +180,11 @@ export const getEpKeyFromArgs = async (
   anchorProgram: anchor.Program,
   mintA: PublicKey | null,
   mintB: PublicKey | null,
-  entangledPair: string | undefined,
+  entangledPair: string | undefined
 ): Promise<PublicKey> => {
   let epKey;
   if (!entangledPair) {
-    console.log('No entangled pair detected, generating from mint arguments.');
+    console.log("No entangled pair detected, generating from mint arguments.");
     if (mintA && mintB) {
       epKey = (await getTokenEntanglement(mintA, mintB))[0];
 
@@ -202,13 +204,13 @@ export const getPriceWithMantissa = async (
   price: number,
   mint: PublicKey,
   walletKeyPair: any,
-  anchorProgram: anchor.Program,
+  anchorProgram: anchor.Program
 ): Promise<number> => {
   const token = new Token(
     anchorProgram.provider.connection,
     new PublicKey(mint),
     TOKEN_PROGRAM_ID,
-    walletKeyPair,
+    walletKeyPair
   );
 
   const mintInfo = await token.getMintInfo();
@@ -220,26 +222,26 @@ export const getPriceWithMantissa = async (
 
 export async function loadTokenEntanglementProgram(
   anchorWallet: AnchorWallet,
-  connection: Connection,
+  connection: Connection
 ) {
   const provider = new anchor.Provider(connection, anchorWallet, {
-    preflightCommitment: 'recent',
+    preflightCommitment: "recent",
   });
 
   const idl = await anchor.Program.fetchIdl(
     TOKEN_ENTANGLEMENT_PROGRAM_ID,
-    provider,
+    provider
   );
   //@ts-ignore
   return new anchor.Program(idl, TOKEN_ENTANGLEMENT_PROGRAM_ID, provider);
 }
 
 export const getTokenEntanglementEscrows = async (
-  mintA: anchor.web3.PublicKey,
-  mintB: anchor.web3.PublicKey,
+  mintA: PublicKey,
+  mintB: PublicKey
 ): Promise<[PublicKey, number, PublicKey, number]> => {
   return [
-    ...(await anchor.web3.PublicKey.findProgramAddress(
+    ...(await PublicKey.findProgramAddress(
       [
         Buffer.from(TOKEN_ENTANGLER),
         mintA.toBuffer(),
@@ -247,9 +249,9 @@ export const getTokenEntanglementEscrows = async (
         Buffer.from(ESCROW),
         Buffer.from(A),
       ],
-      TOKEN_ENTANGLEMENT_PROGRAM_ID,
+      TOKEN_ENTANGLEMENT_PROGRAM_ID
     )),
-    ...(await anchor.web3.PublicKey.findProgramAddress(
+    ...(await PublicKey.findProgramAddress(
       [
         Buffer.from(TOKEN_ENTANGLER),
         mintA.toBuffer(),
@@ -257,88 +259,88 @@ export const getTokenEntanglementEscrows = async (
         Buffer.from(ESCROW),
         Buffer.from(B),
       ],
-      TOKEN_ENTANGLEMENT_PROGRAM_ID,
+      TOKEN_ENTANGLEMENT_PROGRAM_ID
     )),
   ];
 };
 
 export const getAtaForMint = async (
-  mint: anchor.web3.PublicKey,
-  buyer: anchor.web3.PublicKey,
-): Promise<[anchor.web3.PublicKey, number]> => {
-  return await anchor.web3.PublicKey.findProgramAddress(
+  mint: PublicKey,
+  buyer: PublicKey
+): Promise<[PublicKey, number]> => {
+  return await PublicKey.findProgramAddress(
     [buyer.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
-    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
   );
 };
 
 export const showEntanglement = async (
-  anchorWallet: anchor.Wallet,
+  anchorWallet: Wallet,
   connection: Connection,
   entangledPair: string | undefined,
   mintA: string | null,
-  mintB: string | null,
+  mintB: string | null
 ) => {
   const anchorProgram = await loadTokenEntanglementProgram(
     anchorWallet,
-    connection,
+    connection
   );
 
   const epKey = await getEpKeyFromArgs(
     anchorProgram,
     mintA ? new PublicKey(mintA) : null,
     mintB ? new PublicKey(mintB) : null,
-    entangledPair,
+    entangledPair
   );
   const epObj = await anchorProgram.account.entangledPair.fetch(epKey);
-  console.log('-----');
-  console.log('Entangled Pair:', epKey.toBase58());
+  console.log("-----");
+  console.log("Entangled Pair:", epKey.toBase58());
   //@ts-ignore
-  console.log('Mint:', epObj.treasuryMint.toBase58());
+  console.log("Mint:", epObj.treasuryMint.toBase58());
   //@ts-ignore
-  console.log('Authority:', epObj.authority.toBase58());
+  console.log("Authority:", epObj.authority.toBase58());
   //@ts-ignore
-  console.log('Mint A:', epObj.mintA.toBase58());
+  console.log("Mint A:", epObj.mintA.toBase58());
   //@ts-ignore
-  console.log('Mint B:', epObj.mintB.toBase58());
+  console.log("Mint B:", epObj.mintB.toBase58());
   //@ts-ignore
-  console.log('Token A Escrow:', epObj.tokenAEscrow.toBase58());
+  console.log("Token A Escrow:", epObj.tokenAEscrow.toBase58());
   //@ts-ignore
-  console.log('Token B Escrow:', epObj.tokenBEscrow.toBase58());
+  console.log("Token B Escrow:", epObj.tokenBEscrow.toBase58());
   //@ts-ignore
-  console.log('Price:', epObj.price.toNumber());
+  console.log("Price:", epObj.price.toNumber());
   //@ts-ignore
-  console.log('Paid At Least Once:', epObj.paid);
+  console.log("Paid At Least Once:", epObj.paid);
   //@ts-ignore
-  console.log('Pays Every Time:', epObj.paysEveryTime);
+  console.log("Pays Every Time:", epObj.paysEveryTime);
   //@ts-ignore
-  console.log('Bump:', epObj.bump);
+  console.log("Bump:", epObj.bump);
   return epObj;
 };
 
 export const createEntanglement = async (
-  anchorWallet: anchor.Wallet,
+  anchorWallet: Wallet,
   connection: Connection,
   treasuryMint: string | null,
   authority: string | null,
   paysEveryTime: boolean,
   price: string,
   mintA: string,
-  mintB: string,
+  mintB: string
 ) => {
   const anchorProgram = await loadTokenEntanglementProgram(
     anchorWallet,
-    connection,
+    connection
   );
 
   const priceNumber = parseFloat(price);
 
   let authorityKey: PublicKey, tMintKey: PublicKey;
   if (!authority) {
-    console.log('No authority detected, using keypair');
+    console.log("No authority detected, using keypair");
     authorityKey = anchorWallet.publicKey;
   } else {
-    console.log('Authority detected, loading keypair...');
+    console.log("Authority detected, loading keypair...");
     authorityKey = new PublicKey(authority);
   }
 
@@ -346,7 +348,7 @@ export const createEntanglement = async (
   const mintBKey = new PublicKey(mintB);
 
   if (!treasuryMint) {
-    console.log('No treasury mint detected, using SOL.');
+    console.log("No treasury mint detected, using SOL.");
     tMintKey = WRAPPED_SOL_MINT;
   } else {
     tMintKey = new PublicKey(treasuryMint);
@@ -356,7 +358,7 @@ export const createEntanglement = async (
 
   const [reverseEntangledPair, reverseBump] = await getTokenEntanglement(
     mintBKey,
-    mintAKey,
+    mintAKey
   );
 
   const [tokenAEscrow, tokenABump, tokenBEscrow, tokenBBump] =
@@ -366,8 +368,8 @@ export const createEntanglement = async (
       priceNumber,
       tMintKey,
       anchorWallet,
-      anchorProgram,
-    ),
+      anchorProgram
+    )
   );
 
   const ata = (await getAtaForMint(mintBKey, anchorWallet.publicKey))[0];
@@ -401,7 +403,7 @@ export const createEntanglement = async (
         systemProgram: SystemProgram.programId,
         rent: SYSVAR_RENT_PUBKEY,
       },
-    },
+    }
   );
   const instructions = [
     Token.createApproveInstruction(
@@ -410,32 +412,32 @@ export const createEntanglement = async (
       transferAuthority.publicKey,
       anchorWallet.publicKey,
       [],
-      1,
+      1
     ),
     instruction,
     Token.createRevokeInstruction(
       TOKEN_PROGRAM_ID,
       ata,
       anchorWallet.publicKey,
-      [],
+      []
     ),
   ];
 
-  const createResult = await ContextConnection.sendTransactionWithRetry(
+  const createResult = await sendTransactionWithRetry(
     connection,
     anchorWallet,
     instructions,
     signers,
-    'max',
+    "max"
   );
 
-  console.log('Created entanglement', createResult);
+  console.log("Created entanglement", createResult);
   return createResult;
 };
 
 export function chunks(array, size) {
   return Array.apply(0, new Array(Math.ceil(array.length / size))).map(
-    (_, index) => array.slice(index * size, (index + 1) * size),
+    (_, index) => array.slice(index * size, (index + 1) * size)
   );
 }
 
@@ -444,18 +446,18 @@ export const swapEntanglement = async (
   connection: Connection,
   mintA: string | null,
   mintB: string | null,
-  entangledPair: string | undefined,
+  entangledPair: string | undefined
 ) => {
   const anchorProgram = await loadTokenEntanglementProgram(
     anchorWallet,
-    connection,
+    connection
   );
 
   const epKey = await getEpKeyFromArgs(
     anchorProgram,
     mintA ? new PublicKey(mintA) : null,
     mintB ? new PublicKey(mintB) : null,
-    entangledPair,
+    entangledPair
   );
   const epObj = await anchorProgram.account.entangledPair.fetch(epKey);
   //@ts-ignore
@@ -491,11 +493,11 @@ export const swapEntanglement = async (
   const remainingAccounts = [];
 
   const metadataObj = await anchorProgram.provider.connection.getAccountInfo(
-    replacementTokenMetadata,
+    replacementTokenMetadata
   );
   const metadataDecoded: Metadata = decodeMetadata(
     //@ts-ignore
-    Buffer.from(metadataObj.data),
+    Buffer.from(metadataObj.data)
   );
   //@ts-ignore
   for (let i = 0; i < metadataDecoded.data.creators?.length || 0; i++) {
@@ -515,7 +517,7 @@ export const swapEntanglement = async (
             //@ts-ignore
             epObj.treasuryMint,
             //@ts-ignore
-            remainingAccounts[remainingAccounts.length - 1].pubkey,
+            remainingAccounts[remainingAccounts.length - 1].pubkey
           )
         )[0],
         //@ts-ignore
@@ -550,8 +552,8 @@ export const swapEntanglement = async (
 
   if (!isNative) {
     instruction.keys
-      .filter(k => k.pubkey.equals(paymentTransferAuthority.publicKey))
-      .map(k => (k.isSigner = true));
+      .filter((k) => k.pubkey.equals(paymentTransferAuthority.publicKey))
+      .map((k) => (k.isSigner = true));
   }
 
   const instructions = [
@@ -561,7 +563,7 @@ export const swapEntanglement = async (
       transferAuthority.publicKey,
       anchorWallet.publicKey,
       [],
-      1,
+      1
     ),
     ...(!isNative
       ? [
@@ -572,7 +574,7 @@ export const swapEntanglement = async (
             anchorWallet.publicKey,
             [],
             //@ts-ignore
-            epObj.price.toNumber(),
+            epObj.price.toNumber()
           ),
         ]
       : []),
@@ -581,7 +583,7 @@ export const swapEntanglement = async (
       TOKEN_PROGRAM_ID,
       token,
       anchorWallet.publicKey,
-      [],
+      []
     ),
     ...(!isNative
       ? [
@@ -589,39 +591,39 @@ export const swapEntanglement = async (
             TOKEN_PROGRAM_ID,
             paymentAccount,
             anchorWallet.publicKey,
-            [],
+            []
           ),
         ]
       : []),
   ];
-  const txnResult = await ContextConnection.sendTransactionWithRetry(
+  const txnResult = await sendTransactionWithRetry(
     anchorProgram.provider.connection,
     anchorWallet,
     instructions,
     signers,
-    'max',
+    "max"
   );
 
   console.log(
-    'Swapped',
+    "Swapped",
     tokenMint.toBase58(),
-    'mint for',
+    "mint for",
     replacementTokenMint.toBase58(),
-    ' with entangled pair ',
-    epKey.toBase58(),
+    " with entangled pair ",
+    epKey.toBase58()
   );
   return { txnResult, epkey: epKey.toBase58() };
 };
 
 export const searchEntanglements = async (
-  anchorWallet: anchor.Wallet,
+  anchorWallet: Wallet,
   connection: Connection,
   mint: string,
-  authority: string,
+  authority: string
 ) => {
   const anchorProgram = await loadTokenEntanglementProgram(
     anchorWallet,
-    connection,
+    connection
   );
 
   const searchMint = new PublicKey(mint);
@@ -646,7 +648,7 @@ export const searchEntanglements = async (
             },
           },
         ],
-      },
+      }
     );
   const searchMintBAccounts =
     await anchorProgram.provider.connection.getProgramAccounts(
@@ -667,7 +669,7 @@ export const searchEntanglements = async (
             },
           },
         ],
-      },
+      }
     );
 
   const entanglementsAccounts = [
@@ -678,76 +680,76 @@ export const searchEntanglements = async (
   let entanglements: any[] = [];
   await Promise.all(
     chunks(Array.from(Array(entanglementsAccounts.length).keys()), 100).map(
-      async allIndexesInSlice => {
+      async (allIndexesInSlice) => {
         const entanglementData = await getMultipleAccounts(
           anchorProgram.provider.connection,
-          allIndexesInSlice.map(e =>
-            entanglementsAccounts[e].pubkey.toBase58(),
+          allIndexesInSlice.map((e) =>
+            entanglementsAccounts[e].pubkey.toBase58()
           ),
-          'single',
+          "single"
         );
-        const decodedEntanglementData = entanglementData.array.map(a =>
+        const decodedEntanglementData = entanglementData.array.map((a) =>
           anchorProgram.account.entangledPair.coder.accounts.decode(
-            'EntangledPair',
-            a.data,
-          ),
+            "EntangledPair",
+            a.data
+          )
         );
         entanglements = entanglements.concat(decodedEntanglementData);
-      },
-    ),
+      }
+    )
   );
   const reducedEntanglements = entanglements.filter(
-    en =>
+    (en) =>
       //@ts-ignore
       mints.includes(en.mintA.toBase58()) &&
       //@ts-ignore
-      mints.includes(en.mintB.toBase58()),
+      mints.includes(en.mintB.toBase58())
   );
 
   let metadata: Metadata[] = [];
   await Promise.all(
     chunks(Array.from(Array(reducedEntanglements.length).keys()), 100).map(
-      async allIndexesInSlice => {
+      async (allIndexesInSlice) => {
         const metadataAKey: PublicKey[] = [];
         const metadataBKey: PublicKey[] = [];
         for (let i = 0; i < allIndexesInSlice.length; i++) {
           metadataAKey.push(
-            await getMetadata(reducedEntanglements[allIndexesInSlice[i]].mintA),
+            await getMetadata(reducedEntanglements[allIndexesInSlice[i]].mintA)
           );
           metadataBKey.push(
-            await getMetadata(reducedEntanglements[allIndexesInSlice[i]].mintB),
+            await getMetadata(reducedEntanglements[allIndexesInSlice[i]].mintB)
           );
         }
         const metadatasA = await getMultipleAccounts(
           anchorProgram.provider.connection,
-          metadataAKey.map(a => a.toBase58()),
-          'single',
+          metadataAKey.map((a) => a.toBase58()),
+          "single"
         );
         const metadatasB = await getMultipleAccounts(
           anchorProgram.provider.connection,
-          metadataBKey.map(a => a.toBase58()),
-          'single',
+          metadataBKey.map((a) => a.toBase58()),
+          "single"
         );
         const decodedMetadata = [
-          ...metadatasA.array.map(a => decodeMetadata(a.data)),
-          ...metadatasB.array.map(a => decodeMetadata(a.data)),
+          ...metadatasA.array.map((a) => decodeMetadata(a.data)),
+          ...metadatasB.array.map((a) => decodeMetadata(a.data)),
         ];
         await Promise.all(
           chunks(Array.from(Array(decodedMetadata.length).keys()), 10).map(
-            async allIndexesInSlice => {
+            async (allIndexesInSlice) => {
               for (let j = 0; j < allIndexesInSlice.length; j++) {
                 const json = await fetch(
-                  decodedMetadata[allIndexesInSlice[j]].data.uri,
+                  decodedMetadata[allIndexesInSlice[j]].data.uri
                 );
                 const decoded = JSON.parse(await json.text());
                 decodedMetadata[allIndexesInSlice[j]].imageUrl = decoded.image;
               }
-            },
-          ),
+            }
+          )
         );
         metadata = metadata.concat(decodedMetadata);
-      },
-    ),
+      }
+    )
   );
 
   // console.log('Found', mint, entanglements.length, 'entanglements');
@@ -757,19 +759,19 @@ export const searchEntanglements = async (
 export const getMultipleAccounts = async (
   connection: any,
   keys: string[],
-  commitment: string,
+  commitment: string
 ) => {
   const result = await Promise.all(
-    chunks(keys, 99).map(chunk =>
-      getMultipleAccountsCore(connection, chunk, commitment),
-    ),
+    chunks(keys, 99).map((chunk) =>
+      getMultipleAccountsCore(connection, chunk, commitment)
+    )
   );
 
   const array = result
     .map(
-      a =>
+      (a) =>
         //@ts-ignore
-        a.array.map(acc => {
+        a.array.map((acc) => {
           if (!acc) {
             return undefined;
           }
@@ -777,10 +779,10 @@ export const getMultipleAccounts = async (
           const { data, ...rest } = acc;
           const obj = {
             ...rest,
-            data: Buffer.from(data[0], 'base64'),
+            data: Buffer.from(data[0], "base64"),
           } as AccountInfo<Buffer>;
           return obj;
-        }) as AccountInfo<Buffer>[],
+        }) as AccountInfo<Buffer>[]
     )
     //@ts-ignore
     .flat();
@@ -790,14 +792,14 @@ export const getMultipleAccounts = async (
 const getMultipleAccountsCore = async (
   connection: any,
   keys: string[],
-  commitment: string,
+  commitment: string
 ) => {
-  const args = connection._buildArgs([keys], commitment, 'base64');
+  const args = connection._buildArgs([keys], commitment, "base64");
 
-  const unsafeRes = await connection._rpcRequest('getMultipleAccounts', args);
+  const unsafeRes = await connection._rpcRequest("getMultipleAccounts", args);
   if (unsafeRes.error) {
     throw new Error(
-      'failed to get info about account ' + unsafeRes.error.message,
+      "failed to get info about account " + unsafeRes.error.message
     );
   }
 
@@ -811,26 +813,26 @@ const getMultipleAccountsCore = async (
 };
 
 export const getOwnedNFTMints = async (
-  anchorWallet: anchor.Wallet,
-  connection: Connection,
+  anchorWallet: Wallet,
+  connection: Connection
 ) => {
   const anchorProgram = await loadTokenEntanglementProgram(
     anchorWallet,
-    connection,
+    connection
   );
 
   const TokenAccounts =
     await anchorProgram.provider.connection.getParsedTokenAccountsByOwner(
       anchorWallet.publicKey,
-      { programId: TOKEN_PROGRAM_ID },
+      { programId: TOKEN_PROGRAM_ID }
     );
   const NFTMints = TokenAccounts.value
-    .map(val => val.account.data.parsed)
+    .map((val) => val.account.data.parsed)
     .filter(
-      val =>
+      (val) =>
         val.info.tokenAmount.amount !== 0 &&
         val.info.tokenAmount.decimals === 0 &&
-        (mints as any).includes(val.info.mint),
+        (mints as any).includes(val.info.mint)
     );
 
   return NFTMints;

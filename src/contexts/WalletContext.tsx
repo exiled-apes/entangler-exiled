@@ -5,13 +5,9 @@ import {
   WalletProvider as BaseWalletProvider,
 } from "@solana/wallet-adapter-react";
 import {
-  getLedgerWallet,
-  getMathWallet,
   getPhantomWallet,
   getSolflareWallet,
   getSolletWallet,
-  getSolongWallet,
-  getTorusWallet,
 } from "@solana/wallet-adapter-wallets";
 import { Button } from "antd";
 import React, {
@@ -24,10 +20,9 @@ import React, {
   useMemo,
   useState,
 } from "react";
+
 import { notify } from "../utils/notifications";
 import { DefaultModal } from "../components/DefaultModal";
-
-import "./WalletContext.css";
 
 export interface WalletModalContextState {
   visible: boolean;
@@ -169,21 +164,7 @@ export const WalletModalProvider: FC<{ children: ReactNode }> = ({
 
 export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const wallets = useMemo(
-    () => [
-      getPhantomWallet(),
-      getSolflareWallet(),
-      getTorusWallet({
-        options: {
-          clientId:
-            "BEB_D44HovHuXH0Ace97QVqSu1ahCKndjpGhzhVcMy_9XmDTbHyqTbzQTufcyaN0kFwtlVbfPzJwpJXg94gWJqE",
-          uxMode: "redirect",
-        },
-      }),
-      getLedgerWallet(),
-      getSolongWallet(),
-      getMathWallet(),
-      getSolletWallet(),
-    ],
+    () => [getPhantomWallet(), getSolflareWallet(), getSolletWallet()],
     []
   );
 

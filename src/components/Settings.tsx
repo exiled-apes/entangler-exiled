@@ -1,8 +1,6 @@
-import React from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { ENDPOINTS, useConnectionConfig } from '../contexts';
-import { CopyOutlined } from '@ant-design/icons';
-import { ModalEnum, useModal, useWalletModal } from '../contexts';
+import React from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { CopyOutlined } from "@ant-design/icons";
 import {
   Box,
   Button,
@@ -18,12 +16,15 @@ import {
   MenuItem,
   Select,
   Stack,
-} from '@mui/material';
+} from "@mui/material";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import ExpandLess from "@mui/icons-material/ExpandLess";
+import ExpandMore from "@mui/icons-material/ExpandMore";
+import { notification } from "antd";
 
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import ExpandLess from '@mui/icons-material/ExpandLess';
-import ExpandMore from '@mui/icons-material/ExpandMore';
-import { notification } from 'antd';
+import { ENDPOINTS, useConnectionConfig } from "../contexts/ConnectionContext";
+import { useWalletModal } from "../contexts/WalletContext";
+import { ModalEnum, useModal } from "../contexts/ModalContext";
 
 // shorten the checksummed version of the input address to have 4 characters at start and end
 export function shortenAddress(address: string, chars = 4): string {
@@ -33,11 +34,11 @@ export function shortenAddress(address: string, chars = 4): string {
 // import Link from '../components/Link';
 
 export function notify({
-  message = '',
+  message = "",
   description = undefined as any,
-  txid = '',
-  type = 'info',
-  placement = 'bottomLeft',
+  txid = "",
+  type = "info",
+  placement = "bottomLeft",
 }) {
   if (txid) {
     //   <Link
@@ -51,13 +52,13 @@ export function notify({
     description = <></>;
   }
   (notification as any)[type]({
-    message: <span style={{ color: 'black' }}>{message}</span>,
+    message: <span style={{ color: "black" }}>{message}</span>,
     description: (
-      <span style={{ color: 'black', opacity: 0.5 }}>{description}</span>
+      <span style={{ color: "black", opacity: 0.5 }}>{description}</span>
     ),
     placement,
     style: {
-      backgroundColor: 'white',
+      backgroundColor: "white",
     },
   });
 }
@@ -80,8 +81,8 @@ export const Settings = ({ narrow }: { narrow: boolean }) => {
         if (publicKey) {
           await navigator.clipboard.writeText(publicKey.toBase58());
           notify({
-            message: 'Wallet update',
-            description: 'Address copied to clipboard',
+            message: "Wallet update",
+            description: "Address copied to clipboard",
           });
         }
       },
@@ -98,15 +99,15 @@ export const Settings = ({ narrow }: { narrow: boolean }) => {
     },
     {
       click: open,
-      inner: () => 'Change\u00A0Wallet',
+      inner: () => "Change\u00A0Wallet",
     },
     {
       click: () => disconnect().catch(),
       inner: () => `Disconnect\u00A0(${env})`,
       expandedExtra: {
         // these are interepreted as props. TODO: specific types
-        color: 'error' as any,
-        variant: 'contained' as any,
+        color: "error" as any,
+        variant: "contained" as any,
       },
     },
   ];
@@ -114,11 +115,11 @@ export const Settings = ({ narrow }: { narrow: boolean }) => {
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [envCollapseOpen, setEnvCollapseOpen] = React.useState(false);
 
-  const hackySkipSet = 'hackySkipSet';
-  const toggleDrawer = open => event => {
+  const hackySkipSet = "hackySkipSet";
+  const toggleDrawer = (open) => (event) => {
     if (
-      event.type === 'keydown' &&
-      (event.key === 'Tab' || event.key === 'Shift')
+      event.type === "keydown" &&
+      (event.key === "Tab" || event.key === "Shift")
     ) {
       return;
     }
@@ -130,7 +131,7 @@ export const Settings = ({ narrow }: { narrow: boolean }) => {
     setDrawerOpen(open);
   };
 
-  const drawerC = inner => {
+  const drawerC = (inner) => {
     return (
       <React.Fragment>
         <Button onClick={toggleDrawer(true)}>
@@ -156,8 +157,8 @@ export const Settings = ({ narrow }: { narrow: boolean }) => {
         <ListItemText
           primary="Wallet"
           primaryTypographyProps={{
-            fontSize: '1.2rem',
-            fontWeight: 'medium',
+            fontSize: "1.2rem",
+            fontWeight: "medium",
             letterSpacing: 0,
           }}
         />
@@ -179,7 +180,7 @@ export const Settings = ({ narrow }: { narrow: boolean }) => {
               </ListItemButton>
               <Collapse in={envCollapseOpen} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
-                  {ENDPOINTS.map(p => (
+                  {ENDPOINTS.map((p) => (
                     <ListItemButton
                       selected={endpoint === p.endpoint}
                       onClick={() => setEndpoint(p.endpoint)}
@@ -193,7 +194,7 @@ export const Settings = ({ narrow }: { narrow: boolean }) => {
                 </List>
               </Collapse>
               <ListItemButton onClick={handleConnect}>Connect</ListItemButton>
-            </List>,
+            </List>
           )}
         {publicKey &&
           drawerC(
@@ -207,7 +208,7 @@ export const Settings = ({ narrow }: { narrow: boolean }) => {
                   </ListItemButton>
                 );
               })}
-            </List>,
+            </List>
           )}
       </React.Fragment>
     );
@@ -217,18 +218,18 @@ export const Settings = ({ narrow }: { narrow: boolean }) => {
         direction="row"
         spacing={2}
         sx={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          alignItems: 'center',
-          marginRight: '36px',
+          display: "flex",
+          justifyContent: "flex-end",
+          alignItems: "center",
+          marginRight: "36px",
         }}
       >
         {!publicKey && (
           <React.Fragment>
-            <FormControl variant="standard" style={{ minWidth: '10ch' }}>
+            <FormControl variant="standard" style={{ minWidth: "10ch" }}>
               <Select
                 id="connected-env-select"
-                onChange={e => {
+                onChange={(e) => {
                   setEndpoint(e.target.value);
                 }}
                 value={endpoint}

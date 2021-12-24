@@ -1,82 +1,82 @@
-import { useConnection } from '../contexts';
-import { useWallet } from '@solana/wallet-adapter-react';
-import React, { useMemo, useEffect, useCallback, useState } from 'react';
-import { useAnchorWallet } from '@solana/wallet-adapter-react';
-import CircularProgress from '@mui/material/CircularProgress';
-import { PublicKey } from '@solana/web3.js';
-import { Button } from '@mui/material';
-import { styled } from '@mui/system';
-import { getParsedNftAccountsByOwner } from '@nfteyez/sol-rayz';
-import { ensureAtaExists } from '../utils/ensureAtaExists';
+import { useWallet } from "@solana/wallet-adapter-react";
+import React, { useMemo, useEffect, useCallback, useState } from "react";
+import { useAnchorWallet } from "@solana/wallet-adapter-react";
+import CircularProgress from "@mui/material/CircularProgress";
+import { PublicKey } from "@solana/web3.js";
+import { Button } from "@mui/material";
+import { styled } from "@mui/system";
+import { getParsedNftAccountsByOwner } from "@nfteyez/sol-rayz";
 
 import {
   loadTokenEntanglementProgram,
   swapEntanglement,
-} from '../utils/entangler';
-import { useWalletModal } from '../contexts';
-import mintList from '../utils/mint-list.json';
+} from "../utils/entangler";
+import { ensureAtaExists } from "../utils/ensureAtaExists";
+import { useWalletModal } from "../contexts/WalletContext";
+import { useConnection } from "../contexts/ConnectionContext";
+import mintList from "../utils/mint-list.json";
 
-const SwapRoot = styled('div')({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'flex-start',
-  flexDirection: 'column',
-  flex: '1 1 auto',
+const SwapRoot = styled("div")({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "flex-start",
+  flexDirection: "column",
+  flex: "1 1 auto",
 });
 
-const SwapBox = styled('div')({
-  background: '#2a2a2a',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexDirection: 'row',
-  flexWrap: 'wrap',
+const SwapBox = styled("div")({
+  background: "#2a2a2a",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexDirection: "row",
+  flexWrap: "wrap",
   gridGap: 10,
   padding: 50,
-  border: '2px solid #333333',
-  boxShadow: '0px 0px 50px rgba(0,0,0,0.5)',
+  border: "2px solid #333333",
+  boxShadow: "0px 0px 50px rgba(0,0,0,0.5)",
   borderRadius: 10,
   marginTop: 30,
 });
 
-const SwapCard = styled('div')({
-  background: '#2a2a2a',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexDirection: 'column',
+const SwapCard = styled("div")({
+  background: "#2a2a2a",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexDirection: "column",
   gridGap: 10,
 });
 
-const NftImage = styled('img')({
+const NftImage = styled("img")({
   width: 200,
   height: 200,
-  background: '#000',
+  background: "#000",
 });
 
-const Placeholder = styled('div')({
+const Placeholder = styled("div")({
   width: 200,
   height: 200,
-  background: '#000',
+  background: "#000",
 });
 
-const Title = styled('h1')({
-  color: '#ff8b0d',
-  fontWeight: 'bold',
-  fontSize: '3rem',
+const Title = styled("h1")({
+  color: "#ff8b0d",
+  fontWeight: "bold",
+  fontSize: "3rem",
 });
 
-const Title2 = styled('h1')({
-  color: '#ff8b0d',
-  fontWeight: 'bold',
-  fontSize: '2rem',
-  display: 'block',
+const Title2 = styled("h1")({
+  color: "#ff8b0d",
+  fontWeight: "bold",
+  fontSize: "2rem",
+  display: "block",
 });
 
-const About = styled('p')({
-  color: '#aaaaaa',
+const About = styled("p")({
+  color: "#aaaaaa",
   maxWidth: 530,
-  textAlign: 'center',
+  textAlign: "center",
 });
 
 const allMintAddresses = mintList.flat();
@@ -108,27 +108,27 @@ export function Swap() {
       publicAddress: wallet?.publicKey,
       connection,
     });
-    const nextMatchingNfts = (nfts || []).filter(nft =>
-      allMintAddresses.includes(nft.mint),
+    const nextMatchingNfts = (nfts || []).filter((nft) =>
+      allMintAddresses.includes(nft.mint)
     );
     const programId = new PublicKey(
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+      "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
     );
     const allTokens = await connection.getParsedTokenAccountsByOwner(
       new PublicKey(wallet?.publicKey),
-      { programId },
+      { programId }
     );
-    const existingNftAddresses = nextMatchingNfts.map(x => x.mint);
+    const existingNftAddresses = nextMatchingNfts.map((x) => x.mint);
     const allTokenAddresses = allTokens?.value
       ?.filter(
-        value => value.account.data.parsed.info.tokenAmount.amount !== '0',
+        (value) => value.account.data.parsed.info.tokenAmount.amount !== "0"
       )
-      ?.map(value => value.account.data.parsed.info.mint);
+      ?.map((value) => value.account.data.parsed.info.mint);
 
     const nextBustedTokenAddresses = allTokenAddresses
-      .filter(address => allMintAddresses.includes(address))
-      .filter(address => !existingNftAddresses.includes(address))
-      .map(address => ({ mint: address }));
+      .filter((address) => allMintAddresses.includes(address))
+      .filter((address) => !existingNftAddresses.includes(address))
+      .map((address) => ({ mint: address }));
 
     setMatchingNfts(nextMatchingNfts);
     setBustedTokenAddresses(nextBustedTokenAddresses);
@@ -152,12 +152,12 @@ export function Swap() {
         connection,
         mintA,
         mintB,
-        '',
+        ""
       );
       updateNfts();
-      console.log('entangledPair', txnResult.epkey);
+      console.log("entangledPair", txnResult.epkey);
     },
-    [anchorWallet, connection, updateNfts],
+    [anchorWallet, connection, updateNfts]
   );
 
   const fetchImages = useCallback(async () => {
@@ -168,7 +168,7 @@ export function Swap() {
         const data = await response.json();
         nextImages[nft.mint] = data.image;
       }
-      setImageMap(state => ({ ...state, ...nextImages }));
+      setImageMap((state) => ({ ...state, ...nextImages }));
     }
   }, [matchingNfts]);
 
@@ -181,8 +181,8 @@ export function Swap() {
   }, [bustedTokenAddresses?.length, matchingNfts?.length]);
 
   const renderItem = useCallback(
-    ape => {
-      const pair = mintList.find(addresses => addresses.includes(ape.mint));
+    (ape) => {
+      const pair = mintList.find((addresses) => addresses.includes(ape.mint));
       const isOldToken = pair?.indexOf(ape.mint) === 1;
       return (
         <SwapCard key={ape.mint}>
@@ -199,12 +199,12 @@ export function Swap() {
               await handleSubmit({ mintA, mintB, currentMint: ape.mint });
             }}
           >
-            {isOldToken ? 'Swap for New Token' : 'Swap for Old Token'}
+            {isOldToken ? "Swap for New Token" : "Swap for Old Token"}
           </Button>
         </SwapCard>
       );
     },
-    [handleSubmit, imageMap],
+    [handleSubmit, imageMap]
   );
 
   return (
@@ -231,7 +231,7 @@ export function Swap() {
           </>
         )}
         {!loading && !!wallet?.connected && noTokensFound && (
-          <div style={{ textAlign: 'center' }}>
+          <div style={{ textAlign: "center" }}>
             <Title2>NGMI</Title2>
             <Button
               variant="outlined"

@@ -1,28 +1,55 @@
-import * as anchor from '@project-serum/anchor';
-import { web3 } from '@project-serum/anchor';
+import * as anchor from "@project-serum/anchor";
+import { web3 } from "@project-serum/anchor";
 import {
   Connection,
   PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
-} from '@solana/web3.js';
-import { Token } from '@solana/spl-token';
-import { getAtaForMint } from './entangler';
-import { sendTransactionWithRetryWithKeypair } from './transactions';
+} from "@solana/web3.js";
+import { Token } from "@solana/spl-token";
+import * as BufferLayout from "@solana/buffer-layout";
 
-const TOKEN_PROGRAM_ID = new PublicKey(
-  'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-);
-const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey(
-  'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
-);
+import {
+  TOKEN_PROGRAM_ID,
+  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+} from "./ids";
+import { getAtaForMint } from "./entangler";
+import { sendTransactionWithRetryWithKeypair } from "./transactions";
+
+export function closeAccountInstruction(
+  account: PublicKey,
+  dest: PublicKey,
+  owner: PublicKey
+): TransactionInstruction {
+  // @ts-ignore
+  const dataLayout = BufferLayout.struct([BufferLayout.u8("instruction")]);
+  const data = Buffer.alloc(dataLayout.span);
+  dataLayout.encode(
+    {
+      instruction: 9, // CloseAccount instruction
+    },
+    data
+  );
+
+  let keys = [
+    { pubkey: account, isSigner: false, isWritable: true },
+    { pubkey: dest, isSigner: false, isWritable: true },
+    { pubkey: owner, isSigner: true, isWritable: false },
+  ];
+
+  return new TransactionInstruction({
+    keys,
+    programId: TOKEN_PROGRAM_ID,
+    data,
+  });
+}
 
 export function createAssociatedTokenAccountInstruction(
   associatedTokenAddress: PublicKey,
   payer: PublicKey,
   walletAddress: PublicKey,
-  splTokenMintAddress: PublicKey,
+  splTokenMintAddress: PublicKey
 ) {
   const keys = [
     {
@@ -71,7 +98,7 @@ export function createAssociatedTokenAccountInstruction(
 function getTransferInstructions(
   source: PublicKey,
   destination: PublicKey,
-  owner: PublicKey,
+  owner: PublicKey
 ) {
   return Token.createTransferInstruction(
     TOKEN_PROGRAM_ID,
@@ -79,26 +106,26 @@ function getTransferInstructions(
     destination,
     owner,
     [],
-    1,
+    1
   );
 }
 
 export async function ensureAtaExists(
   anchorWallet: any, // AnchorWallet | undefined,
   connection: Connection,
-  mint: string,
+  mint: string
 ): Promise<any> {
   const mintKey = new web3.PublicKey(mint);
   const largestAccount = (await connection.getTokenLargestAccounts(mintKey))
     .value[0];
   const [tokenAccountKey] = await getAtaForMint(
     mintKey,
-    anchorWallet.publicKey,
+    anchorWallet.publicKey
   );
   const instructions: any[] = [];
   if (largestAccount.address.toBase58() !== tokenAccountKey.toBase58()) {
     const accountInfo: any = await connection.getParsedAccountInfo(
-      tokenAccountKey,
+      tokenAccountKey
     );
     if (accountInfo.value === null) {
       instructions.push(
@@ -106,8 +133,8 @@ export async function ensureAtaExists(
           tokenAccountKey,
           anchorWallet.publicKey,
           anchorWallet.publicKey,
-          mintKey,
-        ),
+          mintKey
+        )
       );
     }
     // @ts-ignore
@@ -121,8 +148,17 @@ export async function ensureAtaExists(
         getTransferInstructions(
           largestAccount.address,
           tokenAccountKey,
-          anchorWallet.publicKey,
-        ),
+          anchorWallet.publicKey
+        )
+      );
+      instructions.push(
+        instructions.push(
+          closeAccountInstruction(
+            largestAccount.address,
+            anchorWallet.publicKey,
+            anchorWallet.publicKey
+          )
+        )
       );
     }
   }
@@ -134,7 +170,7 @@ export async function ensureAtaExists(
     anchorWallet,
     instructions,
     signers,
-    'max',
+    "max"
   );
 
   return txData;

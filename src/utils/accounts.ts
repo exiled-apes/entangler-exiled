@@ -1,43 +1,44 @@
-import * as anchor from '@project-serum/anchor';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Program, Address, Coder, Provider } from "@project-serum/anchor";
+import { AnchorWallet as Wallet } from "@solana/wallet-adapter-react";
+import { Connection, PublicKey } from "@solana/web3.js";
 import {
   AccountLayout,
   MintInfo,
   MintLayout,
   TOKEN_PROGRAM_ID,
-} from '@solana/spl-token';
-import BN from 'bn.js';
+} from "@solana/spl-token";
+import BN from "bn.js";
+import log from "loglevel";
 
-import log from 'loglevel';
 import {
   CANDY_MACHINE_ID,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   TOKEN_METADATA_PROGRAM_ID,
   TOKEN_ENTANGLEMENT_PROGRAM_ID,
   WRAPPED_SOL_MINT,
-} from './ids';
+} from "./ids";
 
-export const TOKEN_ENTANGLER = 'token_entangler';
+export const TOKEN_ENTANGLER = "token_entangler";
 
 export const getTokenEntanglement = async (
-  mintA: anchor.web3.PublicKey,
-  mintB: anchor.web3.PublicKey,
+  mintA: PublicKey,
+  mintB: PublicKey
 ): Promise<[PublicKey, number]> => {
-  return await anchor.web3.PublicKey.findProgramAddress(
+  return await PublicKey.findProgramAddress(
     [Buffer.from(TOKEN_ENTANGLER), mintA.toBuffer(), mintB.toBuffer()],
-    TOKEN_ENTANGLEMENT_PROGRAM_ID,
+    TOKEN_ENTANGLEMENT_PROGRAM_ID
   );
 };
 
 export const getEpKeyFromArgs = async (
-  anchorProgram: anchor.Program,
+  anchorProgram: Program,
   mintA: PublicKey | null,
   mintB: PublicKey | null,
-  entangledPair: string | undefined,
+  entangledPair: string | undefined
 ): Promise<PublicKey> => {
   let epKey;
   if (!entangledPair) {
-    log.info('No entangled pair detected, generating from mint arguments.');
+    log.info("No entangled pair detected, generating from mint arguments.");
     if (mintA && mintB) {
       epKey = (await getTokenEntanglement(mintA, mintB))[0];
 
@@ -55,7 +56,7 @@ export const getEpKeyFromArgs = async (
 
 export const getMintInfo = async (
   connection: Connection,
-  mint: string,
+  mint: string
 ): Promise<{ key: PublicKey; info: MintInfo }> => {
   let mintKey: PublicKey;
   try {
@@ -85,11 +86,11 @@ export const getCreatorTokenAccount = async (
   walletKey: PublicKey,
   connection: Connection,
   mintKey: PublicKey,
-  totalClaim: number,
+  totalClaim: number
 ) => {
   const [creatorTokenKey] = await PublicKey.findProgramAddress(
     [walletKey.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mintKey.toBuffer()],
-    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
   );
   const creatorTokenAccount = await connection.getAccountInfo(creatorTokenKey);
   if (creatorTokenAccount === null) {
@@ -97,34 +98,34 @@ export const getCreatorTokenAccount = async (
   }
   if (creatorTokenAccount.data.length !== AccountLayout.span) {
     throw new Error(
-      `Invalid token account size ${creatorTokenAccount.data.length}`,
+      `Invalid token account size ${creatorTokenAccount.data.length}`
     );
   }
   const creatorTokenInfo = AccountLayout.decode(
-    Buffer.from(creatorTokenAccount.data),
+    Buffer.from(creatorTokenAccount.data)
   );
-  if (new BN(creatorTokenInfo.amount, 8, 'le').toNumber() < totalClaim) {
+  if (new BN(creatorTokenInfo.amount, 8, "le").toNumber() < totalClaim) {
     throw new Error(`Creator token account does not have enough tokens`);
   }
   return creatorTokenKey;
 };
 
 export const fetchCoder = async (
-  address: anchor.Address,
-  connection: Connection,
-): Promise<anchor.Coder | null> => {
+  address: Address,
+  connection: Connection
+): Promise<Coder | null> => {
   //@ts-ignore
-  return new anchor.Coder(
+  return new Coder(
     //@ts-ignore
-    await anchor.Program.fetchIdl(address, {
+    await Program.fetchIdl(address, {
       connection: connection,
-    } as anchor.Provider),
+    } as Provider)
   );
 };
 
 export const getCandyConfig = async (
   connection: Connection,
-  config: string,
+  config: string
 ): Promise<PublicKey> => {
   let configKey: PublicKey;
   try {
@@ -144,33 +145,30 @@ export const getCandyConfig = async (
 
 export const getCandyMachineAddress = async (
   config: PublicKey,
-  uuid: string,
+  uuid: string
 ) => {
   return await PublicKey.findProgramAddress(
-    [Buffer.from('candy_machine'), config.toBuffer(), Buffer.from(uuid)],
-    CANDY_MACHINE_ID,
+    [Buffer.from("candy_machine"), config.toBuffer(), Buffer.from(uuid)],
+    CANDY_MACHINE_ID
   );
 };
 
 export async function loadTokenEntanglementProgram(
-  anchorWallet: anchor.Wallet,
-  connection: Connection,
+  anchorWallet: Wallet,
+  connection: Connection
 ) {
-  const provider = new anchor.Provider(connection, anchorWallet, {
-    preflightCommitment: 'recent',
+  const provider = new Provider(connection, anchorWallet, {
+    preflightCommitment: "recent",
   });
 
-  const idl = await anchor.Program.fetchIdl(
-    TOKEN_ENTANGLEMENT_PROGRAM_ID,
-    provider,
-  );
+  const idl = await Program.fetchIdl(TOKEN_ENTANGLEMENT_PROGRAM_ID, provider);
   //@ts-ignore
-  return new anchor.Program(idl, TOKEN_ENTANGLEMENT_PROGRAM_ID, provider);
+  return new Program(idl, TOKEN_ENTANGLEMENT_PROGRAM_ID, provider);
 }
 
 export const getCandyMachine = async (
   connection: Connection,
-  candyMachineKey: PublicKey,
+  candyMachineKey: PublicKey
 ) => {
   const candyMachineCoder = await fetchCoder(CANDY_MACHINE_ID, connection);
   if (candyMachineCoder === null) {
@@ -181,8 +179,8 @@ export const getCandyMachine = async (
     throw new Error(`Could not fetch candy machine`);
   }
   return candyMachineCoder.accounts.decode(
-    'CandyMachine',
-    candyMachineAccount.data,
+    "CandyMachine",
+    candyMachineAccount.data
   );
 };
 
@@ -190,11 +188,11 @@ export const getMetadata = async (mint: PublicKey): Promise<PublicKey> => {
   return (
     await PublicKey.findProgramAddress(
       [
-        Buffer.from('metadata'),
+        Buffer.from("metadata"),
         TOKEN_METADATA_PROGRAM_ID.toBuffer(),
         mint.toBuffer(),
       ],
-      TOKEN_METADATA_PROGRAM_ID,
+      TOKEN_METADATA_PROGRAM_ID
     )
   )[0];
 };
@@ -203,19 +201,19 @@ export const getEdition = async (mint: PublicKey): Promise<PublicKey> => {
   return (
     await PublicKey.findProgramAddress(
       [
-        Buffer.from('metadata'),
+        Buffer.from("metadata"),
         TOKEN_METADATA_PROGRAM_ID.toBuffer(),
         mint.toBuffer(),
-        Buffer.from('edition'),
+        Buffer.from("edition"),
       ],
-      TOKEN_METADATA_PROGRAM_ID,
+      TOKEN_METADATA_PROGRAM_ID
     )
   )[0];
 };
 
 export const getEditionMarkerPda = async (
   mint: PublicKey,
-  edition: BN,
+  edition: BN
 ): Promise<PublicKey> => {
   // editions are divided into pages of 31-bytes (248-bits) for more efficient
   // packing to check if an edition is occupied. The offset is determined from
@@ -225,21 +223,21 @@ export const getEditionMarkerPda = async (
   return (
     await PublicKey.findProgramAddress(
       [
-        Buffer.from('metadata'),
+        Buffer.from("metadata"),
         TOKEN_METADATA_PROGRAM_ID.toBuffer(),
         mint.toBuffer(),
-        Buffer.from('edition'),
+        Buffer.from("edition"),
         Buffer.from(String(editionPageNumber)),
       ],
-      TOKEN_METADATA_PROGRAM_ID,
+      TOKEN_METADATA_PROGRAM_ID
     )
   )[0];
 };
 
 export async function getTokenAmount(
-  anchorProgram: anchor.Program,
-  account: anchor.web3.PublicKey,
-  mint: anchor.web3.PublicKey,
+  anchorProgram: Program,
+  account: PublicKey,
+  mint: PublicKey
 ): Promise<number> {
   let amount = 0;
   if (!mint.equals(WRAPPED_SOL_MINT)) {
@@ -252,9 +250,9 @@ export async function getTokenAmount(
     } catch (e) {
       log.error(e);
       log.info(
-        'Account ',
+        "Account ",
         account.toBase58(),
-        'didnt return value. Assuming 0 tokens.',
+        "didnt return value. Assuming 0 tokens."
       );
     }
   } else {

@@ -10,9 +10,9 @@ import {
   Transaction,
   TransactionInstruction,
   TransactionSignature,
-} from '@solana/web3.js';
-import log from 'loglevel';
-import {AnchorWallet} from "@solana/wallet-adapter-react";
+} from "@solana/web3.js";
+import log from "loglevel";
+import { AnchorWallet } from "@solana/wallet-adapter-react";
 
 interface BlockhashAndFeeCalculator {
   blockhash: Blockhash;
@@ -26,7 +26,7 @@ export const getUnixTs = () => {
 };
 
 export function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export const envFor = (connection: Connection): string => {
@@ -36,12 +36,12 @@ export const envFor = (connection: Connection): string => {
   if (match[1]) {
     return match[1];
   }
-  return 'mainnet-beta';
+  return "mainnet-beta";
 };
 
 export const explorerLinkFor = (
   txid: TransactionSignature,
-  connection: Connection,
+  connection: Connection
 ): string => {
   return `https://explorer.solana.com/tx/${txid}?cluster=${envFor(connection)}`;
 };
@@ -51,24 +51,24 @@ export const sendTransactionWithRetryWithKeypair = async (
   wallet: AnchorWallet,
   instructions: TransactionInstruction[],
   signers: Keypair[],
-  commitment: Commitment = 'singleGossip',
+  commitment: Commitment = "singleGossip",
   includesFeePayer: boolean = false,
   block?: BlockhashAndFeeCalculator,
-  beforeSend?: () => void,
+  beforeSend?: () => void
 ) => {
   const transaction = new Transaction();
-  instructions.forEach(instruction => transaction.add(instruction));
+  instructions.forEach((instruction) => transaction.add(instruction));
   transaction.recentBlockhash = (
     block || (await connection.getRecentBlockhash(commitment))
   ).blockhash;
 
   if (includesFeePayer) {
-    transaction.setSigners(...signers.map(s => s.publicKey));
+    transaction.setSigners(...signers.map((s) => s.publicKey));
   } else {
     transaction.setSigners(
       // fee payed by the wallet owner
       wallet.publicKey,
-      ...signers.map(s => s.publicKey),
+      ...signers.map((s) => s.publicKey)
     );
   }
   await wallet?.signTransaction(transaction);
@@ -104,10 +104,10 @@ export async function sendSignedTransaction({
     rawTransaction,
     {
       skipPreflight: true,
-    },
+    }
   );
 
-  log.debug('Started awaiting confirmation for', txid);
+  log.debug("Started awaiting confirmation for", txid);
 
   let done = false;
   (async () => {
@@ -123,39 +123,39 @@ export async function sendSignedTransaction({
       txid,
       timeout,
       connection,
-      'confirmed',
-      true,
+      "confirmed",
+      true
     );
 
     if (!confirmation)
-      throw new Error('Timed out awaiting confirmation on transaction');
+      throw new Error("Timed out awaiting confirmation on transaction");
 
     if (confirmation.err) {
       log.error(confirmation.err);
-      throw new Error('Transaction failed: Custom instruction error');
+      throw new Error("Transaction failed: Custom instruction error");
     }
 
     slot = confirmation?.slot || 0;
-  } catch (err) {
-    log.error('Timeout Error caught', err);
-    if (err.timeout) {
-      throw new Error('Timed out awaiting confirmation on transaction');
+  } catch (err: any) {
+    log.error("Timeout Error caught", err);
+    if (err?.timeout) {
+      throw new Error("Timed out awaiting confirmation on transaction");
     }
     let simulateResult: SimulatedTransactionResponse | null = null;
     try {
       simulateResult = (
-        await simulateTransaction(connection, signedTransaction, 'single')
+        await simulateTransaction(connection, signedTransaction, "single")
       ).value;
     } catch (e) {
-      log.error('Simulate Transaction error', e);
+      log.error("Simulate Transaction error", e);
     }
     if (simulateResult && simulateResult.err) {
       if (simulateResult.logs) {
         for (let i = simulateResult.logs.length - 1; i >= 0; --i) {
           const line = simulateResult.logs[i];
-          if (line.startsWith('Program log: ')) {
+          if (line.startsWith("Program log: ")) {
             throw new Error(
-              'Transaction failed: ' + line.slice('Program log: '.length),
+              "Transaction failed: " + line.slice("Program log: ".length)
             );
           }
         }
@@ -167,32 +167,32 @@ export async function sendSignedTransaction({
     done = true;
   }
 
-  log.debug('Latency (ms)', txid, getUnixTs() - startTime);
+  log.debug("Latency (ms)", txid, getUnixTs() - startTime);
   return { txid, slot };
 }
 
 async function simulateTransaction(
   connection: Connection,
   transaction: Transaction,
-  commitment: Commitment,
+  commitment: Commitment
 ): Promise<RpcResponseAndContext<SimulatedTransactionResponse>> {
   // @ts-ignore
   transaction.recentBlockhash = await connection._recentBlockhash(
     // @ts-ignore
-    connection._disableBlockhashCaching,
+    connection._disableBlockhashCaching
   );
 
   const signData = transaction.serializeMessage();
   // @ts-ignore
   const wireTransaction = transaction._serialize(signData);
-  const encodedTransaction = wireTransaction.toString('base64');
-  const config: any = { encoding: 'base64', commitment };
+  const encodedTransaction = wireTransaction.toString("base64");
+  const config: any = { encoding: "base64", commitment };
   const args = [encodedTransaction, config];
 
   // @ts-ignore
-  const res = await connection._rpcRequest('simulateTransaction', args);
+  const res = await connection._rpcRequest("simulateTransaction", args);
   if (res.error) {
-    throw new Error('failed to simulate transaction: ' + res.error.message);
+    throw new Error("failed to simulate transaction: " + res.error.message);
   }
   return res.result;
 }
@@ -201,8 +201,8 @@ export async function awaitTransactionSignatureConfirmation(
   txid: TransactionSignature,
   timeout: number,
   connection: Connection,
-  commitment: Commitment = 'recent',
-  queryStatus = false,
+  commitment: Commitment = "recent",
+  queryStatus = false
 ): Promise<SignatureStatus | null | void> {
   let done = false;
   let status: SignatureStatus | null | void = {
@@ -218,7 +218,7 @@ export async function awaitTransactionSignatureConfirmation(
         return;
       }
       done = true;
-      log.warn('Rejecting for timeout...');
+      log.warn("Rejecting for timeout...");
       reject({ timeout: true });
     }, timeout);
     try {
@@ -232,18 +232,18 @@ export async function awaitTransactionSignatureConfirmation(
             confirmations: 0,
           };
           if (result.err) {
-            log.warn('Rejected via websocket', result.err);
+            log.warn("Rejected via websocket", result.err);
             reject(status);
           } else {
-            log.debug('Resolved via websocket', result);
+            log.debug("Resolved via websocket", result);
             resolve(status);
           }
         },
-        commitment,
+        commitment
       );
     } catch (e) {
       done = true;
-      log.error('WS error in setup', txid, e);
+      log.error("WS error in setup", txid, e);
     }
     while (!done && queryStatus) {
       // eslint-disable-next-line no-loop-func
@@ -256,22 +256,22 @@ export async function awaitTransactionSignatureConfirmation(
           console.log(explorerLinkFor(txid, connection));
           if (!done) {
             if (!status) {
-              log.debug('REST null result for', txid, status);
+              log.debug("REST null result for", txid, status);
             } else if (status.err) {
-              log.error('REST error for', txid, status);
+              log.error("REST error for", txid, status);
               done = true;
               reject(status.err);
             } else if (!status.confirmations) {
-              log.error('REST no confirmations for', txid, status);
+              log.error("REST no confirmations for", txid, status);
             } else {
-              log.debug('REST confirmation for', txid, status);
+              log.debug("REST confirmation for", txid, status);
               done = true;
               resolve(status);
             }
           }
         } catch (e) {
           if (!done) {
-            log.error('REST connection error: txid', txid, e);
+            log.error("REST connection error: txid", txid, e);
           }
         }
       })();
@@ -283,6 +283,6 @@ export async function awaitTransactionSignatureConfirmation(
   if (connection._signatureSubscriptions[subId])
     connection.removeSignatureListener(subId);
   done = true;
-  log.debug('Returning status', status);
+  log.debug("Returning status", status);
   return status;
 }

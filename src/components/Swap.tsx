@@ -214,7 +214,7 @@ export function Swap() {
         <About>
           Initial swap is 1 SOL all swaps after that will be free. You can swap
           back and forth as many times as you'd like as long as you own the
-          token. There will be two transactions you have to approve.
+          token. There may be two transactions you have to approve.
         </About>
       )}
       <SwapBox>

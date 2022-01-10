@@ -123,6 +123,7 @@ export async function ensureAtaExists(
     anchorWallet.publicKey
   );
   const instructions: any[] = [];
+
   if (largestAccount.address.toBase58() !== tokenAccountKey.toBase58()) {
     const accountInfo: any = await connection.getParsedAccountInfo(
       tokenAccountKey
@@ -143,6 +144,8 @@ export async function ensureAtaExists(
       (accountInfo.value &&
         accountInfo.value.data?.parsed.info.tokenAmount.uiAmount === 0);
 
+    console.log("needsTransfer", needsTransfer);
+
     if (needsTransfer) {
       instructions.push(
         getTransferInstructions(
@@ -161,17 +164,17 @@ export async function ensureAtaExists(
         )
       );
     }
+
+    const signers: anchor.web3.Keypair[] = [];
+
+    const txData = await sendTransactionWithRetryWithKeypair(
+      connection,
+      anchorWallet,
+      instructions,
+      signers,
+      "max"
+    );
+
+    return txData;
   }
-
-  const signers: anchor.web3.Keypair[] = [];
-
-  const txData = await sendTransactionWithRetryWithKeypair(
-    connection,
-    anchorWallet,
-    instructions,
-    signers,
-    "max"
-  );
-
-  return txData;
 }

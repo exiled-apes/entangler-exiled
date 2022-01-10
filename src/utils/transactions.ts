@@ -82,6 +82,8 @@ export const sendTransactionWithRetryWithKeypair = async (
     signedTransaction: transaction,
   });
 
+  await connection.confirmTransaction(txid);
+
   return { txid, slot };
 };
 

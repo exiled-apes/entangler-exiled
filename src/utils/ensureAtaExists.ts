@@ -156,12 +156,10 @@ export async function ensureAtaExists(
         )
       );
       instructions.push(
-        instructions.push(
-          closeAccountInstruction(
-            largestAccount.address,
-            anchorWallet.publicKey,
-            anchorWallet.publicKey
-          )
+        closeAccountInstruction(
+          largestAccount.address,
+          anchorWallet.publicKey,
+          anchorWallet.publicKey
         )
       );
     }

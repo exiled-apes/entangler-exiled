@@ -145,6 +145,7 @@ export async function ensureAtaExists(
         accountInfo.value.data?.parsed.info.tokenAmount.uiAmount === 0);
 
     console.log("needsTransfer", needsTransfer);
+    console.log("accountInfo", accountInfo);
 
     if (needsTransfer) {
       instructions.push(
